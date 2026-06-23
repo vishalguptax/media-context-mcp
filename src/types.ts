@@ -33,6 +33,9 @@ export interface ProbeInfo {
   height: number;
 }
 
+/** Kind of media a source resolves to. */
+export type MediaType = "video" | "audio" | "image";
+
 /** Frame-extraction strategy. */
 export type Mode = "sheet" | "frames" | "scenes";
 
@@ -96,9 +99,10 @@ export interface AnalyzeImage {
   base64: string;
 }
 
-/** Structured result of {@link analyzeVideo}, independent of any transport. */
+/** Structured result of {@link analyzeMedia}, independent of any transport. */
 export interface AnalyzeResult {
   summary: string;
+  mediaType: MediaType;
   mode: Mode;
   durationSec: number;
   width: number;

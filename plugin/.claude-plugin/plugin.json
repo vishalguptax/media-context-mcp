@@ -1,12 +1,12 @@
 {
-  "name": "video-context",
+  "name": "media-context",
   "version": "0.1.0",
-  "description": "Give Claude visual context from a video file or URL: contact sheets, frames, scene detection and optional transcript.",
-  "author": { "name": "video-context-mcp" },
+  "description": "Give Claude local context from a video, audio, or image file/URL: montage frames, scene detection, Whisper transcript and Tesseract OCR. No paid APIs.",
+  "author": { "name": "media-context-mcp" },
   "mcpServers": {
-    "video-context": {
+    "media-context": {
       "command": "npx",
-      "args": ["-y", "video-context-mcp"]
+      "args": ["-y", "media-context-mcp"]
     }
   }
 }

@@ -1,15 +1,15 @@
 {
-  "name": "video-context",
-  "owner": { "name": "video-context-mcp" },
+  "name": "media-context",
+  "owner": { "name": "media-context-mcp" },
   "metadata": {
-    "description": "Video understanding for Claude Code — analyze a file or URL as low-token visual context.",
+    "description": "Local media understanding for Claude — analyze a video, audio, or image file/URL as low-token context.",
     "version": "0.1.0"
   },
   "plugins": [
     {
-      "name": "video-context",
+      "name": "media-context",
       "source": "./plugin",
-      "description": "Turn a video file or URL into contact sheets, frames, scene-change montages and optional transcript via ffmpeg + yt-dlp + whisper."
+      "description": "Turn a video, audio, or image file/URL into montage frames, scene-change montages, Whisper transcript and Tesseract OCR — fully local via ffmpeg + yt-dlp + whisper + tesseract."
     }
   ]
 }

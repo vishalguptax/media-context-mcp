@@ -10,7 +10,7 @@ export const ANALYZE_SHAPE = {
   source: z
     .string()
     .min(1, "source is empty — pass a file path or an http(s) URL")
-    .describe("Local video file path OR an http(s) URL to a video."),
+    .describe("Local media file path (video, audio, or image) OR an http(s) URL."),
   context: z
     .string()
     .max(4000)

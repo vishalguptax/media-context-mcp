@@ -1,16 +1,20 @@
-# video-context-mcp
+# media-context-mcp
 
-An [MCP](https://modelcontextprotocol.io) server that turns a **video file or URL** into compact, low-token visual context an AI agent can actually read — contact-sheet montages, individual frames, scene-change detection, and an optional speech transcript.
+A **100% local, zero-API** [MCP](https://modelcontextprotocol.io) server that turns a **video, audio, or image** file/URL into compact, low-token context an AI agent can actually read. No cloud upload, no keys, no per-call cost — everything runs on your machine via `ffmpeg`, `yt-dlp`, Whisper and Tesseract.
 
-Models cannot watch video. This server samples the video with `ffmpeg`, tiles the frames into a few downscaled montage images, and returns them as image content blocks plus a short text summary. A 5-minute clip becomes 1–2 images instead of hundreds of stills.
+Models cannot watch video. This server samples it with `ffmpeg`, tiles the frames into a few downscaled montage images, and returns them as image blocks plus a short summary — a 5-minute clip becomes 1–2 images instead of hundreds of stills. Audio comes back as a transcript; images come back with optional OCR.
+
+Built for developers analyzing **app/screen recordings**: use `detail:"high"` + `ocr:true` to read exact UI text, errors and code instead of squinting at thumbnails.
 
 ## Features
 
-- **File or URL** — local path, or any `yt-dlp`-supported URL (YouTube, Vimeo, X, direct mp4, 1000+ sites).
-- **Three modes** — `sheet` (montage grids, cheapest, default), `frames` (individual stills), `scenes` (only scene changes).
-- **Token control** — bound frame count, grid size and per-frame resolution. Downscaling is the main token lever.
-- **Optional transcript** — local OpenAI Whisper, off by default.
-- **Safe execution** — no shell; binaries spawned directly with timeouts and output caps. Temp files cleaned up every call.
+- **Any media, file or URL** — video, audio, or image. Local path, or any `yt-dlp`-supported URL (YouTube, Vimeo, X, direct files, 1000+ sites).
+- **Video modes** — `sheet` (montage grids, cheapest, default), `frames` (individual stills), `scenes` (only scene changes).
+- **Audio** — local Whisper speech transcript.
+- **Image** — the picture plus optional OCR of on-screen text.
+- **OCR** — Tesseract reads UI text/menus/code off full-resolution frames; ideal for screen recordings.
+- **Token control** — montage tiling + bounded frame count, grid, resolution, and `webp`/`jpeg`/`png` output.
+- **Private & safe** — nothing leaves your machine; no shell, binaries spawned directly with timeouts and output caps; temp files cleaned every call.
 
 ## Requirements
 
@@ -21,27 +25,27 @@ Models cannot watch video. This server samples the video with `ffmpeg`, tiles th
 | `whisper` | transcripts (optional)    | `pip install -U openai-whisper` |
 | `tesseract` | OCR / on-screen text (optional) | `winget install UB-Mannheim.TesseractOCR` · `brew install tesseract` · `apt install tesseract-ocr` |
 
-Call the `check_video_deps` tool to see what is detected.
+Call the `check_media_deps` tool to see what is detected.
 
 ## Install
 
 ```bash
-npm install -g video-context-mcp
+npm install -g media-context-mcp
 # or run on demand with npx (no install)
-npx -y video-context-mcp
+npx -y media-context-mcp
 ```
 
 ### Claude Code (MCP)
 
 ```bash
-claude mcp add video-context -- npx -y video-context-mcp
+claude mcp add media-context -- npx -y media-context-mcp
 ```
 
 ### Claude Code (plugin marketplace)
 
 ```
-/plugin marketplace add <your-org>/video-context-mcp
-/plugin install video-context
+/plugin marketplace add <your-org>/media-context-mcp
+/plugin install media-context
 ```
 
 ### Generic MCP client config
@@ -49,9 +53,9 @@ claude mcp add video-context -- npx -y video-context-mcp
 ```json
 {
   "mcpServers": {
-    "video-context": {
+    "media-context": {
       "command": "npx",
-      "args": ["-y", "video-context-mcp"]
+      "args": ["-y", "media-context-mcp"]
     }
   }
 }
@@ -59,11 +63,13 @@ claude mcp add video-context -- npx -y video-context-mcp
 
 ## Tools
 
-### `analyze_video`
+### `analyze_media`
+
+Auto-detects the media type. **Video** → frames/montage (+ optional transcript/OCR); **audio** → transcript; **image** → the picture (+ optional OCR). Returns a text summary, image blocks, and transcript/OCR text blocks as applicable.
 
 | Param | Default | Description |
 |-------|---------|-------------|
-| `source` | — | Local file path or http(s) URL. |
+| `source` | — | Local file path (video/audio/image) or http(s) URL. |
 | `context` | — | Optional note framing the analysis, e.g. "signup flow, focus on the validation error". Echoed atop the summary. |
 | `detail` | — | `high` = readable stills for screen recordings (frames + scale 900 + png); `low` = cheap montage. Fills only fields you leave unset. |
 | `mode` | `sheet` | `sheet` \| `frames` \| `scenes`. |
@@ -102,7 +108,7 @@ display images, then upscaled-if-small and sharpened), so you can keep `scale`
 low for cheap images and still get accurate text. Tune `ocrPsm` if a layout
 reads poorly — `6` for a solid block of text, `11` for scattered labels.
 
-### `check_video_deps`
+### `check_media_deps`
 
 Reports availability of `ffmpeg`, `ffprobe`, `yt-dlp`, `whisper`, `tesseract` with install hints.
 
@@ -112,16 +118,16 @@ The analyzer is exported independently of the MCP transport, so any Node program
 can call it directly:
 
 ```ts
-import { analyzeVideo } from "video-context-mcp";
+import { analyzeMedia } from "media-context-mcp";
 
-const result = await analyzeVideo({ source: "https://youtu.be/…", mode: "sheet" });
+const result = await analyzeMedia({ source: "https://youtu.be/…", mode: "sheet" });
 console.log(result.summary);
 for (const img of result.images) {
   // img.base64 is a PNG montage, ready to send to any vision model
 }
 ```
 
-`import { createServer } from "video-context-mcp/server"` returns the MCP server
+`import { createServer } from "media-context-mcp/server"` returns the MCP server
 if you want to host it on a custom transport.
 
 ## Project layout
@@ -130,11 +136,11 @@ if you want to host it on a custom transport.
 src/
   index.ts        bin entry — MCP stdio server
   server.ts       MCP wiring + tool schemas
-  core.ts         analyzeVideo() orchestration (transport-agnostic)
+  core.ts         analyzeMedia() orchestration (transport-agnostic)
   lib.ts          public library barrel
   types.ts        shared contracts
   schema.ts       input validation (shared by MCP + library)
-  pipeline/       domain: source · ffmpeg · transcript · ocr
+  pipeline/       domain: media (classify) · source · ffmpeg · transcript · ocr
   system/         infra: exec · deps · bins · workspace
 ```
 

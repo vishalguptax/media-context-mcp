@@ -1,10 +1,10 @@
 {
-  "name": "video-context-mcp",
+  "name": "media-context-mcp",
   "version": "0.1.0",
-  "description": "MCP server that turns a video file or URL into low-token visual context (contact sheets, frames, scene detection) plus optional transcript, for AI agents.",
+  "description": "100% local, zero-API MCP server that turns a video, audio, or image file/URL into low-token context for AI agents — montage frames, scene detection, speech transcript (Whisper), and on-screen OCR (Tesseract). No cloud upload, no keys.",
   "type": "module",
   "bin": {
-    "video-context-mcp": "dist/index.js"
+    "media-context-mcp": "dist/index.js"
   },
   "main": "dist/lib.js",
   "types": "dist/lib.d.ts",
@@ -40,9 +40,16 @@
     "mcp",
     "model-context-protocol",
     "video",
+    "audio",
+    "image",
+    "ocr",
+    "tesseract",
     "ffmpeg",
     "yt-dlp",
+    "whisper",
     "transcript",
+    "screen-recording",
+    "local",
     "claude",
     "ai",
     "frames"

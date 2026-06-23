@@ -4,11 +4,12 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { run } from "../dist/system/exec.js";
 import { checkDeps } from "../dist/system/deps.js";
-import { analyzeVideo, AnalyzeError } from "../dist/core.js";
+import { analyzeMedia, AnalyzeError } from "../dist/core.js";
 
 const deps = await checkDeps();
+const analyzeVideo = analyzeMedia;
 
-describe.skipIf(!deps.ffmpeg || !deps.ffprobe)("analyzeVideo (library API)", () => {
+describe.skipIf(!deps.ffmpeg || !deps.ffprobe)("analyzeMedia — video (library API)", () => {
   let dir: string;
   let clip: string;
 
@@ -33,6 +34,7 @@ describe.skipIf(!deps.ffmpeg || !deps.ffprobe)("analyzeVideo (library API)", () 
 
   it("returns base64 images and a structured summary for a local file", async () => {
     const r = await analyzeVideo({ source: clip, mode: "sheet", maxFrames: 12, grid: 3, scale: 200 });
+    expect(r.mediaType).toBe("video");
     expect(r.mode).toBe("sheet");
     expect(r.width).toBe(320);
     expect(r.images.length).toBeGreaterThanOrEqual(1);

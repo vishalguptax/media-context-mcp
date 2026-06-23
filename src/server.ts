@@ -1,6 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { checkDeps, installHint } from "./system/deps.js";
-import { analyzeVideo } from "./core.js";
+import { analyzeMedia } from "./core.js";
 import { ANALYZE_SHAPE } from "./schema.js";
 
 type Content =
@@ -9,16 +9,16 @@ type Content =
 
 const VERSION = "0.1.0";
 
-/** Build the MCP server with both video tools registered. */
+/** Build the MCP server with both media tools registered. */
 export function createServer(): McpServer {
-  const server = new McpServer({ name: "video-context-mcp", version: VERSION });
+  const server = new McpServer({ name: "media-context-mcp", version: VERSION });
 
   server.registerTool(
-    "check_video_deps",
+    "check_media_deps",
     {
-      title: "Check video tool dependencies",
+      title: "Check media tool dependencies",
       description:
-        "Report which external binaries (ffmpeg, ffprobe, yt-dlp, whisper) are available. Call this first if analyze_video fails with a missing-binary error.",
+        "Report which external binaries (ffmpeg, ffprobe, yt-dlp, whisper, tesseract) are available. Call this first if analyze_media fails with a missing-binary error.",
       inputSchema: {},
     },
     async () => {
@@ -35,16 +35,16 @@ export function createServer(): McpServer {
   );
 
   server.registerTool(
-    "analyze_video",
+    "analyze_media",
     {
-      title: "Analyze a video file or URL",
+      title: "Analyze a video, audio, or image file or URL",
       description:
-        "Turn a local video file path or a URL (YouTube, Vimeo, direct mp4, etc.) into compact visual context an agent can read. Default mode 'sheet' tiles sampled frames into a few montage images to keep token cost low. Use 'frames' for individual stills, 'scenes' to capture only scene changes. Optionally include a speech transcript.",
+        "Turn a local media file or URL (video, audio, or image) into compact context a model can read — fully local, no paid APIs. Video: montage frames (mode 'sheet', cheapest), individual stills ('frames'), or scene changes ('scenes'); add transcript and/or ocr. Audio: speech transcript. Image: the picture plus optional OCR. For app/screen recordings use detail:'high' + ocr:true. Pass context to frame the analysis.",
       inputSchema: ANALYZE_SHAPE,
     },
     async (args) => {
       try {
-        const result = await analyzeVideo(args);
+        const result = await analyzeMedia(args);
         const content: Content[] = [{ type: "text", text: result.summary }];
         for (const img of result.images) {
           content.push({ type: "image", data: img.base64, mimeType: img.mimeType });

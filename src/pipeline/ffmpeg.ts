@@ -2,9 +2,42 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { run } from "../system/exec.js";
 import { bin } from "../system/bins.js";
-import type { ProbeInfo, ExtractParams, ExtractResult } from "../types.js";
+import type { ProbeInfo, ExtractParams, ExtractResult, ImageFormat } from "../types.js";
 
 export type { ProbeInfo, Mode, ExtractParams, ExtractResult } from "../types.js";
+
+const FORMAT_EXT: Record<ImageFormat, string> = { webp: "webp", jpeg: "jpg", png: "png" };
+
+const FORMAT_QUALITY: Record<ImageFormat, string[]> = {
+  webp: ["-quality", "80"],
+  jpeg: ["-q:v", "4"],
+  png: [],
+};
+
+/**
+ * Produce a single display copy of a still image, downscaled to at most `scale`
+ * wide (never upscaled) and re-encoded to `format`. Used for the image-input
+ * path so returned images stay token-cheap while OCR reads the original.
+ */
+export async function scaleImage(
+  filePath: string,
+  outDir: string,
+  scale: number,
+  format: ImageFormat
+): Promise<string> {
+  await fs.mkdir(outDir, { recursive: true });
+  const dst = path.join(outDir, `image.${FORMAT_EXT[format]}`);
+  const vf = `scale='min(iw,${scale})':-2:flags=lanczos`;
+  const res = await run(
+    bin("ffmpeg"),
+    ["-i", filePath, "-vf", vf, "-frames:v", "1", ...FORMAT_QUALITY[format], "-y", dst],
+    { timeoutMs: 60 * 1000 }
+  );
+  if (res.code !== 0) {
+    throw new Error(`ffmpeg (image) failed: ${res.stderr.slice(-300).trim()}`);
+  }
+  return dst;
+}
 
 export async function probe(filePath: string): Promise<ProbeInfo> {
   const res = await run(
@@ -64,8 +97,8 @@ function timeArgs(p: ExtractParams): string[] {
 export async function extract(p: ExtractParams): Promise<ExtractResult> {
   await fs.mkdir(p.outDir, { recursive: true });
   const span = windowSeconds(p);
-  const ext = formatExt(p.format);
-  const q = qualityArgs(p.format);
+  const ext = FORMAT_EXT[p.format];
+  const q = FORMAT_QUALITY[p.format];
 
   if (p.mode === "scenes") {
     const vf = `select='gt(scene,${p.sceneThreshold})',scale=${p.scale}:-2,tile=${p.grid}x${p.grid}`;
@@ -142,22 +175,6 @@ export async function extract(p: ExtractParams): Promise<ExtractResult> {
   }
   const images = await listImages(p.outDir, ext);
   return { images, frameCount: images.length, effectiveFps: fps };
-}
-
-function formatExt(format: ExtractParams["format"]): string {
-  return format === "jpeg" ? "jpg" : format;
-}
-
-/** Encoder quality flags tuned for small files without visible degradation. */
-function qualityArgs(format: ExtractParams["format"]): string[] {
-  switch (format) {
-    case "webp":
-      return ["-quality", "80"];
-    case "jpeg":
-      return ["-q:v", "4"];
-    case "png":
-      return [];
-  }
 }
 
 async function listImages(dir: string, ext: string): Promise<string[]> {
