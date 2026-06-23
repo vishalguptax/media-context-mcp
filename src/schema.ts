@@ -11,6 +11,15 @@ export const ANALYZE_SHAPE = {
     .string()
     .min(1, "source is empty — pass a file path or an http(s) URL")
     .describe("Local video file path OR an http(s) URL to a video."),
+  context: z
+    .string()
+    .max(4000)
+    .optional()
+    .describe("Optional note about the video to frame the analysis, e.g. 'signup flow, focus on the validation error'."),
+  detail: z
+    .enum(["low", "high"])
+    .optional()
+    .describe("high = readable stills for screen recordings (frames + large scale + png); low = cheap montage. Overrides only the fields you leave unset."),
   mode: z
     .enum(["sheet", "frames", "scenes"])
     .default("sheet")
@@ -58,6 +67,14 @@ export const ANALYZE_SHAPE = {
     .string()
     .default("small")
     .describe("Whisper model name (tiny, base, small, medium, large)."),
+  ocr: z
+    .boolean()
+    .default(false)
+    .describe("Extract on-screen text via OCR — ideal for app/screen recordings. Implies detail:high unless set."),
+  ocrLang: z
+    .string()
+    .default("eng")
+    .describe("Tesseract language code(s) for OCR, e.g. 'eng' or 'eng+deu'."),
   maxDurationSec: z
     .number()
     .min(1)

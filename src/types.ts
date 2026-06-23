@@ -5,7 +5,7 @@
  */
 
 /** External binaries the server can drive. */
-export type BinName = "ffmpeg" | "ffprobe" | "ytdlp" | "whisper";
+export type BinName = "ffmpeg" | "ffprobe" | "ytdlp" | "whisper" | "tesseract";
 
 /** Availability of each external binary. */
 export interface DepStatus {
@@ -13,7 +13,11 @@ export interface DepStatus {
   ffprobe: boolean;
   ytdlp: boolean;
   whisper: boolean;
+  tesseract: boolean;
 }
+
+/** Level of visual detail. high = readable stills (screen recordings); low = cheap montage. */
+export type Detail = "low" | "high";
 
 /** A user-supplied source resolved to a local file. */
 export interface ResolvedSource {
@@ -66,6 +70,8 @@ export interface TranscriptResult {
 /** Public options for {@link analyzeVideo}. All but `source` are optional. */
 export interface AnalyzeOptions {
   source: string;
+  context?: string;
+  detail?: Detail;
   mode?: Mode;
   format?: ImageFormat;
   maxFrames?: number;
@@ -76,6 +82,8 @@ export interface AnalyzeOptions {
   endSec?: number;
   transcript?: boolean;
   whisperModel?: string;
+  ocr?: boolean;
+  ocrLang?: string;
   maxDurationSec?: number;
   maxFileSizeMb?: number;
 }
@@ -97,5 +105,7 @@ export interface AnalyzeResult {
   images: AnalyzeImage[];
   totalImages: number;
   transcript?: TranscriptResult;
+  /** On-screen text recovered via OCR, when `ocr` was requested. */
+  ocrText?: string;
   warnings: string[];
 }

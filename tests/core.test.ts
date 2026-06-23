@@ -56,6 +56,23 @@ describe.skipIf(!deps.ffmpeg || !deps.ffprobe)("analyzeVideo (library API)", () 
     ).rejects.toThrow(/endSec/);
   });
 
+  it("detail:high switches to readable stills (frames + png)", async () => {
+    const r = await analyzeVideo({ source: clip, detail: "high", maxFrames: 4 });
+    expect(r.mode).toBe("frames");
+    expect(r.images[0].mimeType).toBe("image/png");
+  });
+
+  it("echoes caller context into the summary", async () => {
+    const r = await analyzeVideo({ source: clip, context: "the signup flow", maxFrames: 4 });
+    expect(r.summary).toContain("Context from caller: the signup flow");
+  });
+
+  it("runs the OCR path (returns text or a clear warning)", async () => {
+    const r = await analyzeVideo({ source: clip, ocr: true, maxFrames: 4 });
+    const ranOcr = r.ocrText !== undefined || r.warnings.some((w) => /OCR/i.test(w));
+    expect(ranOcr).toBe(true);
+  });
+
   it("applies defaults when optional fields are omitted", async () => {
     const r = await analyzeVideo({ source: clip });
     expect(r.mode).toBe("sheet");

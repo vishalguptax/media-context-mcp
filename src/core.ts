@@ -5,11 +5,13 @@ import { createWorkspace } from "./system/workspace.js";
 import { resolveSource, isUrl } from "./pipeline/source.js";
 import { probe, extract } from "./pipeline/ffmpeg.js";
 import { transcribe } from "./pipeline/transcript.js";
+import { ocrImages } from "./pipeline/ocr.js";
 import { AnalyzeSchema } from "./schema.js";
 import type { AnalyzeOptions, AnalyzeResult, AnalyzeImage, ImageFormat, Mode } from "./types.js";
 
 export const MAX_IMAGES = 12;
 export const MAX_TRANSCRIPT_CHARS = 24000;
+export const MAX_OCR_CHARS = 24000;
 
 const MIME: Record<ImageFormat, string> = {
   webp: "image/webp",
@@ -130,6 +132,25 @@ export async function analyzeVideo(options: AnalyzeOptions): Promise<AnalyzeResu
       }
     }
 
+    let ocrText: string | undefined;
+    if (o.ocr) {
+      if (!deps.tesseract) {
+        warnings.push(`OCR skipped — tesseract isn't installed. ${installHint("tesseract")}`);
+      } else {
+        try {
+          const text = await ocrImages(shownPaths, o.ocrLang);
+          if (!text) {
+            warnings.push("OCR found no readable text on these frames.");
+          } else {
+            ocrText =
+              text.length > MAX_OCR_CHARS ? text.slice(0, MAX_OCR_CHARS) + "\n…[truncated]" : text;
+          }
+        } catch (err) {
+          warnings.push(`OCR failed: ${(err as Error).message}`);
+        }
+      }
+    }
+
     return {
       summary,
       mode: o.mode,
@@ -140,6 +161,7 @@ export async function analyzeVideo(options: AnalyzeOptions): Promise<AnalyzeResu
       images,
       totalImages: result.images.length,
       transcript,
+      ocrText,
       warnings,
     };
   } finally {
@@ -150,7 +172,7 @@ export async function analyzeVideo(options: AnalyzeOptions): Promise<AnalyzeResu
 /** Validate and fill defaults, turning schema violations into AnalyzeError. */
 function parseOptions(options: AnalyzeOptions): ReturnType<typeof AnalyzeSchema.parse> {
   try {
-    return AnalyzeSchema.parse(options);
+    return AnalyzeSchema.parse(withDetailPreset(options));
   } catch (err) {
     if (err instanceof ZodError) {
       throw new AnalyzeError(err.issues.map((i) => i.message).join("; "));
@@ -159,14 +181,31 @@ function parseOptions(options: AnalyzeOptions): ReturnType<typeof AnalyzeSchema.
   }
 }
 
+/**
+ * Apply the `detail: high` profile — readable stills for screen recordings —
+ * filling only the fields the caller left unset, so explicit overrides win.
+ * `ocr` implies high detail so text is read off crisp frames, not tiny tiles.
+ */
+function withDetailPreset(options: AnalyzeOptions): AnalyzeOptions {
+  const detail = options.detail ?? (options.ocr ? "high" : undefined);
+  if (detail !== "high") return options;
+  return {
+    ...options,
+    mode: options.mode ?? "frames",
+    scale: options.scale ?? 900,
+    format: options.format ?? "png",
+  };
+}
+
 function buildSummary(
-  o: { mode: Mode; format: ImageFormat; grid: number; scale: number; sceneThreshold: number },
+  o: { mode: Mode; format: ImageFormat; grid: number; scale: number; sceneThreshold: number; context?: string },
   resolved: { origin: string; downloaded: boolean },
   info: { durationSec: number; width: number; height: number },
   result: { images: string[]; effectiveFps: number | null },
   shown: number
 ): string {
   return [
+    ...(o.context ? [`Context from caller: ${o.context}`] : []),
     `Source: ${resolved.origin}${resolved.downloaded ? " (downloaded)" : ""}`,
     `Duration: ${info.durationSec.toFixed(1)}s  Resolution: ${info.width}x${info.height}`,
     `Mode: ${o.mode}  Format: ${o.format}  Images: ${shown}${result.images.length > shown ? ` (capped from ${result.images.length})` : ""}`,

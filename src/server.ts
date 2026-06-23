@@ -24,10 +24,11 @@ export function createServer(): McpServer {
     async () => {
       const deps = await checkDeps();
       const lines = [
-        `ffmpeg:  ${deps.ffmpeg ? "ok" : "MISSING — " + installHint("ffmpeg")}`,
-        `ffprobe: ${deps.ffprobe ? "ok" : "MISSING — " + installHint("ffprobe")}`,
-        `yt-dlp:  ${deps.ytdlp ? "ok" : "MISSING (needed for URLs) — " + installHint("ytdlp")}`,
-        `whisper: ${deps.whisper ? "ok" : "MISSING (needed for transcripts) — " + installHint("whisper")}`,
+        `ffmpeg:    ${deps.ffmpeg ? "ok" : "MISSING — " + installHint("ffmpeg")}`,
+        `ffprobe:   ${deps.ffprobe ? "ok" : "MISSING — " + installHint("ffprobe")}`,
+        `yt-dlp:    ${deps.ytdlp ? "ok" : "MISSING (needed for URLs) — " + installHint("ytdlp")}`,
+        `whisper:   ${deps.whisper ? "ok" : "MISSING (needed for transcripts) — " + installHint("whisper")}`,
+        `tesseract: ${deps.tesseract ? "ok" : "MISSING (needed for OCR) — " + installHint("tesseract")}`,
       ];
       return { content: [{ type: "text", text: lines.join("\n") }] };
     }
@@ -53,6 +54,9 @@ export function createServer(): McpServer {
             type: "text",
             text: `Transcript (whisper ${result.transcript.model}):\n${result.transcript.text}`,
           });
+        }
+        if (result.ocrText) {
+          content.push({ type: "text", text: `On-screen text (OCR):\n${result.ocrText}` });
         }
         for (const w of result.warnings) {
           content.push({ type: "text", text: w });

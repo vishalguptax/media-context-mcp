@@ -14,6 +14,7 @@ const ENV_KEYS = {
   ffprobe: "FFPROBE_BIN",
   ytdlp: "YTDLP_BIN",
   whisper: "WHISPER_BIN",
+  tesseract: "TESSERACT_BIN",
 } as const;
 
 const DEFAULTS = {
@@ -21,6 +22,7 @@ const DEFAULTS = {
   ffprobe: "ffprobe",
   ytdlp: "yt-dlp",
   whisper: "whisper",
+  tesseract: "tesseract",
 } as const;
 
 export function bin(name: BinName): string {
