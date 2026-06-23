@@ -91,92 +91,26 @@ Only `ffmpeg` is required; the rest are optional and unlock one feature each. `c
 
 ## Examples
 
-You just talk to your agent — it reads the tool description and picks the options. Each example shows the **prompt you type** and the call it produces.
+Just ask your assistant in plain language — it picks the right options for you.
 
-**Summarize a recording**
+- “Summarize `demo.mp4`.” — a quick overview from sampled frames.
+- “What error does the app show at the end of `bug.mp4`?” — reads the on-screen text.
+- “Transcribe `standup.m4a` and list the action items.” — speech to text.
+- “Summarize `https://youtu.be/VIDEO_ID` and include the transcript.” — fetches and transcribes.
+- “In `slider.mp4`, find the frame where the slider flickers around 0:06.” — scans a dense burst of frames to catch a sub-second glitch.
 
-> “What happens in `demo.mp4`?”
+Want finer control — modes, cropping, OCR language, sampling rate? It's all in the **[usage guide](./docs/usage.md)**.
 
-```json
-{ "source": "demo.mp4" }
-```
+## Tools
 
-The default samples the whole clip into one or two montage images — the cheapest overview.
+The server exposes two tools, which your assistant calls automatically:
 
-**Read the exact error in a screen recording**
+| Tool | What it does |
+|------|--------------|
+| **`analyze_media`** | Turn a video, audio, or image (file or URL) into model-readable context. Auto-detects the type — video → montage frames / stills / scene montages / dense filmstrip; audio → Whisper transcript; image → the picture plus optional OCR. Supports cropping, time windows, OCR language, and sampling rate. |
+| **`check_media_deps`** | Report which of `ffmpeg`, `yt-dlp`, `whisper`, and `tesseract` are installed, with install hints. |
 
-> “The app throws an error in `bug.mp4` around the end — what does it say?”
-
-```json
-{ "source": "bug.mp4", "detail": "high", "ocr": true }
-```
-
-`detail: high` switches to full-size stills; `ocr` returns the text verbatim, so the model quotes the real error string instead of guessing from blurry pixels.
-
-**Transcribe a voice note or podcast**
-
-> “Transcribe `standup.m4a` and list the action items.”
-
-```json
-{ "source": "standup.m4a" }
-```
-
-Audio is detected automatically — you get the transcript, no images.
-
-**Analyze a YouTube link**
-
-> “Summarize `https://youtu.be/VIDEO_ID` and give me the transcript.”
-
-```json
-{ "source": "https://youtu.be/VIDEO_ID", "transcript": true }
-```
-
-**Find a sub-second UI glitch**
-
-> “There's a slider in `slider.mp4` that flickers to the wrong value for a split second around 0:06 — find the frame.”
-
-```json
-{ "source": "slider.mp4", "mode": "filmstrip",
-  "startSec": 5.6, "endSec": 7.4, "fps": 12,
-  "crop": { "x": 0, "y": 1730, "width": 1080, "height": 360 } }
-```
-
-`filmstrip` stacks a dense burst of cropped frames into one strip — so a 100 ms flicker shows up as a frame that disagrees with its neighbours.
-
-More recipes, prompts, and the full option reference are in the **[usage guide](./docs/usage.md)**.
-
-## Use it as a library
-
-The engine works without the MCP layer:
-
-```ts
-import { analyzeMedia } from "media-context-mcp";
-
-const { summary, images, ocrText } = await analyzeMedia({
-  source: "demo.mp4",
-  ocr: true,
-});
-```
-
-`images` are base64 PNG/WebP you can send to any vision model; `ocrText` is the recovered on-screen text. A runnable script lives in [`examples/try.mjs`](./examples/try.mjs):
-
-```bash
-node examples/try.mjs demo.mp4 --ocr --detail
-```
-
-## How it works
-
-Models read images and text, not raw media. So the server samples the source with `ffmpeg`, tiles the frames into a few downscaled montages, and returns them as image blocks plus a short summary — a 5-minute clip becomes 1–2 images instead of hundreds of stills. Audio goes through Whisper; on-screen text is read by Tesseract off full-resolution frames; URLs are fetched with `yt-dlp`. Each call works in a temp directory that's deleted when it returns.
-
-```
-src/
-  index.ts     bin entry — MCP stdio server
-  server.ts    MCP wiring + tool schemas
-  core.ts      analyzeMedia() — the orchestration
-  lib.ts       public library exports
-  pipeline/    media · source · ffmpeg · transcript · ocr
-  system/      exec · deps · bins · workspace
-```
+Everything runs locally, and each call cleans up its temporary files when it returns.
 
 ## Development
 
