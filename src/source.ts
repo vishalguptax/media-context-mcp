@@ -1,5 +1,4 @@
 import { promises as fs } from "node:fs";
-import { tmpdir } from "node:os";
 import path from "node:path";
 import { run } from "./exec.js";
 import { checkDeps, installHint } from "./deps.js";
@@ -7,8 +6,6 @@ import { checkDeps, installHint } from "./deps.js";
 export interface ResolvedSource {
   /** Absolute path to a local video file ready for ffmpeg. */
   filePath: string;
-  /** Directory to remove on cleanup, or null when the source was already local. */
-  tempDir: string | null;
   /** Original source string, for logging. */
   origin: string;
   /** True when the file was downloaded from a URL. */
@@ -21,16 +18,14 @@ export function isUrl(source: string): boolean {
   return URL_RE.test(source.trim());
 }
 
-async function makeTempDir(): Promise<string> {
-  return fs.mkdtemp(path.join(tmpdir(), "video-context-"));
-}
-
 /**
  * Resolve a user-supplied source into a local file path. Local paths are
- * validated; URLs are downloaded with yt-dlp into a throwaway temp directory.
+ * validated in place; URLs are downloaded with yt-dlp into the provided
+ * workspace directory, whose lifetime the caller owns.
  */
 export async function resolveSource(
   source: string,
+  downloadDir: string,
   opts: { maxDurationSec?: number } = {}
 ): Promise<ResolvedSource> {
   const trimmed = source.trim();
@@ -45,7 +40,7 @@ export async function resolveSource(
       throw new Error(`file not found: ${abs}`);
     }
     if (!stat.isFile()) throw new Error(`not a file: ${abs}`);
-    return { filePath: abs, tempDir: null, origin: trimmed, downloaded: false };
+    return { filePath: abs, origin: trimmed, downloaded: false };
   }
 
   const deps = await checkDeps();
@@ -53,8 +48,7 @@ export async function resolveSource(
     throw new Error(`URL sources need yt-dlp. ${installHint("ytdlp")}`);
   }
 
-  const tempDir = await makeTempDir();
-  const outTemplate = path.join(tempDir, "source.%(ext)s");
+  const outTemplate = path.join(downloadDir, "source.%(ext)s");
   const args = [
     "--no-playlist",
     "--no-warnings",
@@ -70,32 +64,20 @@ export async function resolveSource(
 
   const res = await run("yt-dlp", args, { timeoutMs: 10 * 60 * 1000 });
   if (res.code !== 0) {
-    await safeRm(tempDir);
     throw new Error(`yt-dlp failed (${res.code}): ${res.stderr.slice(-600).trim()}`);
   }
 
-  const files = await fs.readdir(tempDir);
+  const files = await fs.readdir(downloadDir);
   const downloaded = files.find((f) => f.startsWith("source."));
   if (!downloaded) {
-    await safeRm(tempDir);
     throw new Error(
       "yt-dlp produced no file (the URL may exceed the duration limit or be unsupported)"
     );
   }
 
   return {
-    filePath: path.join(tempDir, downloaded),
-    tempDir,
+    filePath: path.join(downloadDir, downloaded),
     origin: trimmed,
     downloaded: true,
   };
-}
-
-export async function safeRm(dir: string | null): Promise<void> {
-  if (!dir) return;
-  try {
-    await fs.rm(dir, { recursive: true, force: true });
-  } catch {
-    /* best effort */
-  }
 }

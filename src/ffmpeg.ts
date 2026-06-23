@@ -99,7 +99,7 @@ export async function extract(p: ExtractParams): Promise<ExtractResult> {
       vf,
       "-frames:v",
       String(Math.ceil(p.maxFrames / (p.grid * p.grid)) || 1),
-      "-vsync",
+      "-fps_mode",
       "vfr",
       "-y",
       pattern,
@@ -113,7 +113,7 @@ export async function extract(p: ExtractParams): Promise<ExtractResult> {
   }
 
   const targetFrames = Math.max(1, p.maxFrames);
-  const fps = Math.min(1, targetFrames / span);
+  const fps = targetFrames / span;
 
   if (p.mode === "frames") {
     const vf = `fps=${fps.toFixed(6)},scale=${p.scale}:-2`;

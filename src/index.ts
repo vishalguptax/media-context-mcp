@@ -4,9 +4,10 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import { checkDeps, installHint } from "./deps.js";
-import { resolveSource, safeRm, isUrl } from "./source.js";
+import { resolveSource, isUrl } from "./source.js";
 import { probe, extract, type Mode } from "./ffmpeg.js";
 import { transcribe } from "./transcript.js";
+import { createWorkspace } from "./workspace.js";
 
 const MAX_IMAGES = 12;
 const MAX_TRANSCRIPT_CHARS = 24000;
@@ -126,18 +127,18 @@ server.registerTool(
       };
     }
 
-    let resolved: Awaited<ReturnType<typeof resolveSource>> | null = null;
-    let workDir: string | null = null;
+    const workspace = await createWorkspace();
     try {
-      resolved = await resolveSource(args.source, {
+      const downloadDir = await workspace.sub("download");
+      const resolved = await resolveSource(args.source, downloadDir, {
         maxDurationSec: args.maxDurationSec,
       });
       const info = await probe(resolved.filePath);
 
-      workDir = `${resolved.tempDir ?? resolved.filePath}.frames-${process.pid}`;
+      const framesDir = await workspace.sub("frames");
       const result = await extract({
         filePath: resolved.filePath,
-        outDir: workDir,
+        outDir: framesDir,
         mode: args.mode as Mode,
         scale: args.scale,
         maxFrames: args.maxFrames,
@@ -186,7 +187,8 @@ server.registerTool(
           );
         } else {
           try {
-            const tr = await transcribe(resolved.filePath, workDir, args.whisperModel);
+            const transcriptDir = await workspace.sub("transcript");
+            const tr = await transcribe(resolved.filePath, transcriptDir, args.whisperModel);
             const clipped =
               tr.text.length > MAX_TRANSCRIPT_CHARS
                 ? tr.text.slice(0, MAX_TRANSCRIPT_CHARS) + "\n…[truncated]"
@@ -202,8 +204,7 @@ server.registerTool(
     } catch (err) {
       return { isError: true, content: [textBlock((err as Error).message)] };
     } finally {
-      await safeRm(workDir);
-      if (resolved?.tempDir) await safeRm(resolved.tempDir);
+      await workspace.dispose();
     }
   }
 );
