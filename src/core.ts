@@ -1,29 +1,25 @@
 import { promises as fs } from "node:fs";
+import { ZodError } from "zod";
 import { checkDeps, installHint } from "./system/deps.js";
 import { createWorkspace } from "./system/workspace.js";
 import { resolveSource, isUrl } from "./pipeline/source.js";
 import { probe, extract } from "./pipeline/ffmpeg.js";
 import { transcribe } from "./pipeline/transcript.js";
-import type { AnalyzeOptions, AnalyzeResult, AnalyzeImage, Mode } from "./types.js";
+import { AnalyzeSchema } from "./schema.js";
+import type { AnalyzeOptions, AnalyzeResult, AnalyzeImage, ImageFormat, Mode } from "./types.js";
 
 export const MAX_IMAGES = 12;
 export const MAX_TRANSCRIPT_CHARS = 24000;
 
-const DEFAULTS = {
-  mode: "sheet" as Mode,
-  maxFrames: 30,
-  grid: 5,
-  scale: 320,
-  sceneThreshold: 0.4,
-  transcript: false,
-  whisperModel: "small",
-  maxDurationSec: 3600,
-  maxFileSizeMb: 500,
+const MIME: Record<ImageFormat, string> = {
+  webp: "image/webp",
+  jpeg: "image/jpeg",
+  png: "image/png",
 };
 
 /**
  * Thrown for failures the caller should surface as an error rather than a
- * partial result (missing binaries, unresolvable source, no frames produced).
+ * partial result (bad input, missing binaries, unresolvable source, no frames).
  */
 export class AnalyzeError extends Error {
   override name = "AnalyzeError";
@@ -38,9 +34,9 @@ async function asAnalyzeError<T>(step: () => Promise<T>): Promise<T> {
   }
 }
 
-async function toImage(filePath: string): Promise<AnalyzeImage> {
+async function toImage(filePath: string, format: ImageFormat): Promise<AnalyzeImage> {
   const buf = await fs.readFile(filePath);
-  return { mimeType: "image/png", base64: buf.toString("base64") };
+  return { mimeType: MIME[format], base64: buf.toString("base64") };
 }
 
 /**
@@ -50,16 +46,16 @@ async function toImage(filePath: string): Promise<AnalyzeImage> {
  * artifacts are removed before returning.
  */
 export async function analyzeVideo(options: AnalyzeOptions): Promise<AnalyzeResult> {
-  const o = { ...DEFAULTS, ...stripUndefined(options), source: options.source };
+  const o = parseOptions(options);
   const warnings: string[] = [];
 
   const deps = await checkDeps();
   if (!deps.ffmpeg || !deps.ffprobe) {
     const missing = !deps.ffmpeg ? "ffmpeg" : "ffprobe";
-    throw new AnalyzeError(`${missing} not found. ${installHint(missing)}`);
+    throw new AnalyzeError(`${missing} not found — I need it to see anything. ${installHint(missing)}`);
   }
   if (isUrl(o.source) && !deps.ytdlp) {
-    throw new AnalyzeError(`URL given but yt-dlp not found. ${installHint("ytdlp")}`);
+    throw new AnalyzeError(`That's a URL, but yt-dlp isn't installed so I can't fetch it. ${installHint("ytdlp")}`);
   }
 
   const workspace = await createWorkspace();
@@ -73,11 +69,18 @@ export async function analyzeVideo(options: AnalyzeOptions): Promise<AnalyzeResu
     );
     const info = await asAnalyzeError(() => probe(resolved.filePath));
 
+    if (info.width === 0 && info.height === 0) {
+      throw new AnalyzeError(
+        "No video stream in this file — I read pixels, not vibes. If it's audio-only, re-run with transcript: true and I'll listen instead."
+      );
+    }
+
     const framesDir = await workspace.sub("frames");
     const result = await extract({
       filePath: resolved.filePath,
       outDir: framesDir,
       mode: o.mode,
+      format: o.format,
       scale: o.scale,
       maxFrames: o.maxFrames,
       grid: o.grid,
@@ -89,26 +92,33 @@ export async function analyzeVideo(options: AnalyzeOptions): Promise<AnalyzeResu
 
     if (result.images.length === 0) {
       throw new AnalyzeError(
-        "No frames were extracted. For 'scenes' mode try a lower sceneThreshold, or switch to mode 'sheet'."
+        o.mode === "scenes"
+          ? "Zero frames — this video may have no hard cuts. Lower sceneThreshold or switch to mode 'sheet'."
+          : "Zero frames extracted. Check that startSec/endSec fall inside the video, or try mode 'sheet'."
       );
     }
 
     const shownPaths = result.images.slice(0, MAX_IMAGES);
     if (result.images.length > shownPaths.length) {
-      warnings.push(`Showing ${shownPaths.length} of ${result.images.length} images.`);
+      warnings.push(
+        `Showing the first ${shownPaths.length} of ${result.images.length} images to keep token cost sane — narrow the window or lower maxFrames for full coverage.`
+      );
     }
-    const images = await Promise.all(shownPaths.map(toImage));
+    const images = await Promise.all(shownPaths.map((p) => toImage(p, o.format)));
 
     const summary = buildSummary(o, resolved, info, result, shownPaths.length);
 
     let transcript: AnalyzeResult["transcript"];
     if (o.transcript) {
       if (!deps.whisper) {
-        warnings.push(`Transcript skipped: whisper not installed. ${installHint("whisper")}`);
+        warnings.push(`Transcript skipped — whisper isn't installed. ${installHint("whisper")}`);
       } else {
         try {
           const transcriptDir = await workspace.sub("transcript");
           const tr = await transcribe(resolved.filePath, transcriptDir, o.whisperModel);
+          if (!tr.text) {
+            warnings.push("Transcript came back empty — whisper heard only silence.");
+          }
           const text =
             tr.text.length > MAX_TRANSCRIPT_CHARS
               ? tr.text.slice(0, MAX_TRANSCRIPT_CHARS) + "\n…[truncated]"
@@ -137,14 +147,20 @@ export async function analyzeVideo(options: AnalyzeOptions): Promise<AnalyzeResu
   }
 }
 
-function stripUndefined<T extends object>(obj: T): Partial<T> {
-  return Object.fromEntries(
-    Object.entries(obj).filter(([, v]) => v !== undefined)
-  ) as Partial<T>;
+/** Validate and fill defaults, turning schema violations into AnalyzeError. */
+function parseOptions(options: AnalyzeOptions): ReturnType<typeof AnalyzeSchema.parse> {
+  try {
+    return AnalyzeSchema.parse(options);
+  } catch (err) {
+    if (err instanceof ZodError) {
+      throw new AnalyzeError(err.issues.map((i) => i.message).join("; "));
+    }
+    throw err;
+  }
 }
 
 function buildSummary(
-  o: { mode: Mode; grid: number; scale: number; sceneThreshold: number },
+  o: { mode: Mode; format: ImageFormat; grid: number; scale: number; sceneThreshold: number },
   resolved: { origin: string; downloaded: boolean },
   info: { durationSec: number; width: number; height: number },
   result: { images: string[]; effectiveFps: number | null },
@@ -153,7 +169,7 @@ function buildSummary(
   return [
     `Source: ${resolved.origin}${resolved.downloaded ? " (downloaded)" : ""}`,
     `Duration: ${info.durationSec.toFixed(1)}s  Resolution: ${info.width}x${info.height}`,
-    `Mode: ${o.mode}  Images: ${shown}${result.images.length > shown ? ` (capped from ${result.images.length})` : ""}`,
+    `Mode: ${o.mode}  Format: ${o.format}  Images: ${shown}${result.images.length > shown ? ` (capped from ${result.images.length})` : ""}`,
     result.effectiveFps
       ? `Sampling: ~${result.effectiveFps.toFixed(4)} fps, grid ${o.grid}x${o.grid}, tile width ${o.scale}px`
       : `Scene detection threshold ${o.sceneThreshold}, grid ${o.grid}x${o.grid}`,

@@ -36,10 +36,24 @@ describe.skipIf(!deps.ffmpeg || !deps.ffprobe)("analyzeVideo (library API)", () 
     expect(r.mode).toBe("sheet");
     expect(r.width).toBe(320);
     expect(r.images.length).toBeGreaterThanOrEqual(1);
-    expect(r.images[0].mimeType).toBe("image/png");
+    expect(r.images[0].mimeType).toBe("image/webp"); // webp is the token-cheap default
     expect(r.images[0].base64.length).toBeGreaterThan(0);
     expect(r.summary).toContain("Mode: sheet");
     expect(Array.isArray(r.warnings)).toBe(true);
+  });
+
+  it("honors an explicit image format and is smaller than png", async () => {
+    const webp = await analyzeVideo({ source: clip, mode: "sheet", maxFrames: 9, grid: 3, format: "webp" });
+    const png = await analyzeVideo({ source: clip, mode: "sheet", maxFrames: 9, grid: 3, format: "png" });
+    expect(webp.images[0].mimeType).toBe("image/webp");
+    expect(png.images[0].mimeType).toBe("image/png");
+    expect(webp.images[0].base64.length).toBeLessThan(png.images[0].base64.length);
+  });
+
+  it("rejects endSec <= startSec via schema validation", async () => {
+    await expect(
+      analyzeVideo({ source: clip, startSec: 5, endSec: 2 })
+    ).rejects.toThrow(/endSec/);
   });
 
   it("applies defaults when optional fields are omitted", async () => {

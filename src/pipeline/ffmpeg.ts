@@ -64,10 +64,12 @@ function timeArgs(p: ExtractParams): string[] {
 export async function extract(p: ExtractParams): Promise<ExtractResult> {
   await fs.mkdir(p.outDir, { recursive: true });
   const span = windowSeconds(p);
+  const ext = formatExt(p.format);
+  const q = qualityArgs(p.format);
 
   if (p.mode === "scenes") {
     const vf = `select='gt(scene,${p.sceneThreshold})',scale=${p.scale}:-2,tile=${p.grid}x${p.grid}`;
-    const pattern = path.join(p.outDir, "scene_%03d.png");
+    const pattern = path.join(p.outDir, `scene_%03d.${ext}`);
     const args = [
       ...timeArgs(p),
       "-i",
@@ -78,6 +80,7 @@ export async function extract(p: ExtractParams): Promise<ExtractResult> {
       String(Math.ceil(p.maxFrames / (p.grid * p.grid)) || 1),
       "-fps_mode",
       "vfr",
+      ...q,
       "-y",
       pattern,
     ];
@@ -85,7 +88,7 @@ export async function extract(p: ExtractParams): Promise<ExtractResult> {
     if (res.code !== 0) {
       throw new Error(`ffmpeg (scenes) failed: ${res.stderr.slice(-400).trim()}`);
     }
-    const images = await listPng(p.outDir);
+    const images = await listImages(p.outDir, ext);
     return { images, frameCount: images.length, effectiveFps: null };
   }
 
@@ -94,7 +97,7 @@ export async function extract(p: ExtractParams): Promise<ExtractResult> {
 
   if (p.mode === "frames") {
     const vf = `fps=${fps.toFixed(6)},scale=${p.scale}:-2`;
-    const pattern = path.join(p.outDir, "frame_%04d.png");
+    const pattern = path.join(p.outDir, `frame_%04d.${ext}`);
     const args = [
       ...timeArgs(p),
       "-i",
@@ -103,6 +106,7 @@ export async function extract(p: ExtractParams): Promise<ExtractResult> {
       vf,
       "-frames:v",
       String(targetFrames),
+      ...q,
       "-y",
       pattern,
     ];
@@ -110,14 +114,14 @@ export async function extract(p: ExtractParams): Promise<ExtractResult> {
     if (res.code !== 0) {
       throw new Error(`ffmpeg (frames) failed: ${res.stderr.slice(-400).trim()}`);
     }
-    const images = await listPng(p.outDir);
+    const images = await listImages(p.outDir, ext);
     return { images, frameCount: images.length, effectiveFps: fps };
   }
 
   const perSheet = p.grid * p.grid;
   const sheets = Math.max(1, Math.ceil(targetFrames / perSheet));
   const vf = `fps=${fps.toFixed(6)},scale=${p.scale}:-2,tile=${p.grid}x${p.grid}`;
-  const pattern = path.join(p.outDir, "sheet_%03d.png");
+  const pattern = path.join(p.outDir, `sheet_%03d.${ext}`);
   const args = [
     ...timeArgs(p),
     "-i",
@@ -128,6 +132,7 @@ export async function extract(p: ExtractParams): Promise<ExtractResult> {
     String(sheets),
     "-fps_mode",
     "vfr",
+    ...q,
     "-y",
     pattern,
   ];
@@ -135,14 +140,30 @@ export async function extract(p: ExtractParams): Promise<ExtractResult> {
   if (res.code !== 0) {
     throw new Error(`ffmpeg (sheet) failed: ${res.stderr.slice(-400).trim()}`);
   }
-  const images = await listPng(p.outDir);
+  const images = await listImages(p.outDir, ext);
   return { images, frameCount: images.length, effectiveFps: fps };
 }
 
-async function listPng(dir: string): Promise<string[]> {
+function formatExt(format: ExtractParams["format"]): string {
+  return format === "jpeg" ? "jpg" : format;
+}
+
+/** Encoder quality flags tuned for small files without visible degradation. */
+function qualityArgs(format: ExtractParams["format"]): string[] {
+  switch (format) {
+    case "webp":
+      return ["-quality", "80"];
+    case "jpeg":
+      return ["-q:v", "4"];
+    case "png":
+      return [];
+  }
+}
+
+async function listImages(dir: string, ext: string): Promise<string[]> {
   const files = await fs.readdir(dir);
   return files
-    .filter((f) => f.toLowerCase().endsWith(".png"))
+    .filter((f) => f.toLowerCase().endsWith(`.${ext}`))
     .sort()
     .map((f) => path.join(dir, f));
 }

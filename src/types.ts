@@ -32,11 +32,15 @@ export interface ProbeInfo {
 /** Frame-extraction strategy. */
 export type Mode = "sheet" | "frames" | "scenes";
 
+/** Encoded image format. webp is smallest (fewest tokens), png is lossless. */
+export type ImageFormat = "webp" | "jpeg" | "png";
+
 /** Low-level extraction request handed to ffmpeg. */
 export interface ExtractParams {
   filePath: string;
   outDir: string;
   mode: Mode;
+  format: ImageFormat;
   scale: number;
   maxFrames: number;
   grid: number;
@@ -63,6 +67,7 @@ export interface TranscriptResult {
 export interface AnalyzeOptions {
   source: string;
   mode?: Mode;
+  format?: ImageFormat;
   maxFrames?: number;
   grid?: number;
   scale?: number;
