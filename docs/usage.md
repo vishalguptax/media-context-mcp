@@ -55,6 +55,16 @@ Returns the (downscaled) image plus a clean text copy. Vision models can already
 
 `filmstrip` samples a dense burst of frames from a narrow window, crops them to the affected control, and stacks them into one vertical strip. A flicker that lasts ~100 ms — invisible to ordinary sampling — shows up as a frame whose value disagrees with its neighbours. Widen `fps` or the window if you miss it.
 
+### Auto-detect a value jump
+
+```json
+{ "source": "slider.mp4", "detectJumps": true,
+  "startSec": 5.6, "endSec": 7.4, "fps": 12,
+  "crop": { "x": 0, "y": 1730, "width": 1080, "height": 360 } }
+```
+
+`detectJumps` goes a step further than `filmstrip`: it OCRs the number on each frame (a slider %, a counter), tracks it over time, and **reports the glitch for you** — e.g. *"value 48 at 6.33s (neighbours 80→80)"* — so you don't have to read the strip yourself. Crop to the value and keep the window narrow for the cleanest read.
+
 ## Modes
 
 | Mode | What it does | Reach for it when |
@@ -97,6 +107,7 @@ Use `ocrLang` for non-English (`"eng+deu"`, `"jpn"`, …). `ocrMaxFrames` bounds
 | `ocrLang` | `eng` | Tesseract language code(s), e.g. `eng+deu`. |
 | `ocrPsm` | `3` | Page segmentation: `3` auto · `6` block · `11` sparse. |
 | `ocrMaxFrames` | `12` | Frames to OCR (full-res, independent of display images). |
+| `detectJumps` | `false` | Track the on-screen number across frames and report non-monotonic "jump-back" glitches with timestamps. Pair with `crop` + a narrow window. |
 | `maxDurationSec` | `3600` | Reject URL downloads longer than this. |
 | `maxFileSizeMb` | `500` | Abort a URL download past this size. |
 

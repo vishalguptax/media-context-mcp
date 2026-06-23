@@ -6,6 +6,7 @@ import { resolveSource, isUrl, type ResolvedSource } from "./pipeline/source.js"
 import { probe, extract, scaleImage } from "./pipeline/ffmpeg.js";
 import { transcribe } from "./pipeline/transcript.js";
 import { ocrImages } from "./pipeline/ocr.js";
+import { trackValues, findAnomalies } from "./pipeline/track.js";
 import { classifyMedia, imageMime } from "./pipeline/media.js";
 import { AnalyzeSchema } from "./schema.js";
 import type {
@@ -17,6 +18,8 @@ import type {
   ImageFormat,
   ProbeInfo,
   TranscriptResult,
+  ValueSample,
+  ValueAnomaly,
 } from "./types.js";
 
 export const MAX_IMAGES = 12;
@@ -173,6 +176,50 @@ async function analyzeVideoMedia(
     }
   }
 
+  let valueTimeline: ValueSample[] | undefined;
+  let anomalies: ValueAnomaly[] | undefined;
+  if (o.detectJumps) {
+    if (!deps.tesseract) {
+      warnings.push(`Jump detection skipped — tesseract isn't installed. ${installHint("tesseract")}`);
+    } else {
+      const trackDir = await workspace.sub("track-frames");
+      const trackFps = o.fps && o.fps > 0 ? o.fps : 8;
+      const tracked = await extract({
+        filePath: resolved.filePath,
+        outDir: trackDir,
+        mode: "frames",
+        format: "png",
+        scale: 1280,
+        maxFrames: 60,
+        grid: o.grid,
+        sceneThreshold: o.sceneThreshold,
+        fps: trackFps,
+        crop: normalizeCrop(o.crop, info.width, info.height),
+        startSec: o.startSec,
+        endSec: o.endSec,
+        durationSec: info.durationSec,
+      });
+      const trackPre = await workspace.sub("track-pre");
+      const points = await trackValues(tracked.images, {
+        startSec: o.startSec ?? 0,
+        fps: tracked.effectiveFps ?? trackFps,
+        lang: o.ocrLang,
+        workDir: trackPre,
+      });
+      valueTimeline = points.map((p) => ({ timeSec: p.timeSec, value: p.value }));
+      anomalies = findAnomalies(points);
+      warnings.push(
+        anomalies.length
+          ? `Detected ${anomalies.length} value jump(s): ${anomalies
+              .map((a) => `${a.value} at ${a.timeSec.toFixed(2)}s (neighbours ${a.from}→${a.to})`)
+              .join("; ")}`
+          : points.length
+            ? "No value jumps detected — the tracked number moved monotonically."
+            : "Jump detection found no readable number on these frames (try a crop around the value)."
+      );
+    }
+  }
+
   return {
     summary,
     mediaType: "video",
@@ -185,6 +232,8 @@ async function analyzeVideoMedia(
     totalImages: result.images.length,
     transcript,
     ocrText,
+    valueTimeline,
+    anomalies,
     warnings,
   };
 }

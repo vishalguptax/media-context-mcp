@@ -111,6 +111,10 @@ export const ANALYZE_SHAPE = {
     .max(60)
     .default(12)
     .describe("Frames to OCR (sampled at full resolution, independent of the display images)."),
+  detectJumps: z
+    .boolean()
+    .default(false)
+    .describe("Track the on-screen number (e.g. a slider %) across frames and report non-monotonic 'jump-back' glitches with timestamps. Pair with a crop around the value and a narrow window for best results."),
   maxDurationSec: z
     .number()
     .min(1)

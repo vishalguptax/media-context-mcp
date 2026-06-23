@@ -58,6 +58,12 @@ export function createServer(): McpServer {
         if (result.ocrText) {
           content.push({ type: "text", text: `On-screen text (OCR):\n${result.ocrText}` });
         }
+        if (result.anomalies?.length) {
+          const lines = result.anomalies.map(
+            (a) => `  • ${a.value} at ${a.timeSec.toFixed(2)}s — jumped against the trend (${a.from} → ${a.to})`
+          );
+          content.push({ type: "text", text: `Value jumps detected:\n${lines.join("\n")}` });
+        }
         for (const w of result.warnings) {
           content.push({ type: "text", text: w });
         }

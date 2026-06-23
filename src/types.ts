@@ -106,8 +106,23 @@ export interface AnalyzeOptions {
   ocrLang?: string;
   ocrPsm?: number;
   ocrMaxFrames?: number;
+  detectJumps?: boolean;
   maxDurationSec?: number;
   maxFileSizeMb?: number;
+}
+
+/** A sampled on-screen numeric value at a point in time. */
+export interface ValueSample {
+  timeSec: number;
+  value: number;
+}
+
+/** A detected non-monotonic blip in the tracked value (a "jump-back" glitch). */
+export interface ValueAnomaly {
+  timeSec: number;
+  value: number;
+  from: number;
+  to: number;
 }
 
 /** A single returned image, encoded for transport-agnostic consumption. */
@@ -130,5 +145,9 @@ export interface AnalyzeResult {
   transcript?: TranscriptResult;
   /** On-screen text recovered via OCR, when `ocr` was requested. */
   ocrText?: string;
+  /** Per-frame on-screen value over time, when `detectJumps` was requested. */
+  valueTimeline?: ValueSample[];
+  /** Non-monotonic blips in the tracked value, when `detectJumps` was requested. */
+  anomalies?: ValueAnomaly[];
   warnings: string[];
 }
