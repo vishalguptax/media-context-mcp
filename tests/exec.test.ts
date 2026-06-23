@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { run, exists } from "../dist/exec.js";
+import { run, exists } from "../dist/system/exec.js";
 
 describe("run", () => {
   it("captures stdout and exit code from a successful command", async () => {

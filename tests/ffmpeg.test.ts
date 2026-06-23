@@ -2,9 +2,9 @@ import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { promises as fs } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { run } from "../dist/exec.js";
-import { checkDeps } from "../dist/deps.js";
-import { probe, extract } from "../dist/ffmpeg.js";
+import { run } from "../dist/system/exec.js";
+import { checkDeps } from "../dist/system/deps.js";
+import { probe, extract } from "../dist/pipeline/ffmpeg.js";
 
 const deps = await checkDeps();
 

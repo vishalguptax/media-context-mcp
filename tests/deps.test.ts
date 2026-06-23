@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { checkDeps, installHint } from "../dist/deps.js";
+import { checkDeps, installHint } from "../dist/system/deps.js";
 
 describe("checkDeps", () => {
   it("reports a boolean for every known dependency", async () => {

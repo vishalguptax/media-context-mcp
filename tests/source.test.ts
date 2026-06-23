@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { promises as fs } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { isUrl, resolveSource } from "../dist/source.js";
+import { isUrl, resolveSource } from "../dist/pipeline/source.js";
 
 describe("isUrl", () => {
   it("recognizes http and https URLs", () => {

@@ -5,6 +5,10 @@
  * clients are frequently launched from a GUI with a minimal PATH that omits,
  * for example, a Python Scripts directory where whisper lives.
  */
+import type { BinName } from "../types.js";
+
+export type { BinName } from "../types.js";
+
 const ENV_KEYS = {
   ffmpeg: "FFMPEG_BIN",
   ffprobe: "FFPROBE_BIN",
@@ -18,8 +22,6 @@ const DEFAULTS = {
   ytdlp: "yt-dlp",
   whisper: "whisper",
 } as const;
-
-export type BinName = keyof typeof DEFAULTS;
 
 export function bin(name: BinName): string {
   const override = process.env[ENV_KEYS[name]];

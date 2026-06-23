@@ -1,17 +1,11 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { run } from "./exec.js";
-import { checkDeps, installHint } from "./deps.js";
-import { bin } from "./bins.js";
+import { run } from "../system/exec.js";
+import { checkDeps, installHint } from "../system/deps.js";
+import { bin } from "../system/bins.js";
+import type { ResolvedSource } from "../types.js";
 
-export interface ResolvedSource {
-  /** Absolute path to a local video file ready for ffmpeg. */
-  filePath: string;
-  /** Original source string, for logging. */
-  origin: string;
-  /** True when the file was downloaded from a URL. */
-  downloaded: boolean;
-}
+export type { ResolvedSource } from "../types.js";
 
 const URL_RE = /^https?:\/\//i;
 

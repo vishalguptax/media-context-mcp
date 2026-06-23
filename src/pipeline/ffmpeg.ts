@@ -1,13 +1,10 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { run } from "./exec.js";
-import { bin } from "./bins.js";
+import { run } from "../system/exec.js";
+import { bin } from "../system/bins.js";
+import type { ProbeInfo, ExtractParams, ExtractResult } from "../types.js";
 
-export interface ProbeInfo {
-  durationSec: number;
-  width: number;
-  height: number;
-}
+export type { ProbeInfo, Mode, ExtractParams, ExtractResult } from "../types.js";
 
 export async function probe(filePath: string): Promise<ProbeInfo> {
   const res = await run(
@@ -41,27 +38,6 @@ export async function probe(filePath: string): Promise<ProbeInfo> {
     width: Number(stream.width ?? 0),
     height: Number(stream.height ?? 0),
   };
-}
-
-export type Mode = "sheet" | "frames" | "scenes";
-
-export interface ExtractParams {
-  filePath: string;
-  outDir: string;
-  mode: Mode;
-  scale: number;
-  maxFrames: number;
-  grid: number;
-  sceneThreshold: number;
-  startSec?: number;
-  endSec?: number;
-  durationSec: number;
-}
-
-export interface ExtractResult {
-  images: string[];
-  frameCount: number;
-  effectiveFps: number | null;
 }
 
 function windowSeconds(p: ExtractParams): number {

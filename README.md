@@ -79,6 +79,37 @@ Returns a text summary followed by up to 12 image blocks (and a transcript block
 
 Reports availability of `ffmpeg`, `ffprobe`, `yt-dlp`, `whisper` with install hints.
 
+## Use as a library
+
+The analyzer is exported independently of the MCP transport, so any Node program
+can call it directly:
+
+```ts
+import { analyzeVideo } from "video-context-mcp";
+
+const result = await analyzeVideo({ source: "https://youtu.be/…", mode: "sheet" });
+console.log(result.summary);
+for (const img of result.images) {
+  // img.base64 is a PNG montage, ready to send to any vision model
+}
+```
+
+`import { createServer } from "video-context-mcp/server"` returns the MCP server
+if you want to host it on a custom transport.
+
+## Project layout
+
+```
+src/
+  index.ts        bin entry — MCP stdio server
+  server.ts       MCP wiring + tool schemas
+  core.ts         analyzeVideo() orchestration (transport-agnostic)
+  lib.ts          public library barrel
+  types.ts        shared contracts
+  pipeline/       domain: source · ffmpeg · transcript
+  system/         infra: exec · deps · bins · workspace
+```
+
 ## Token tips
 
 - Stay in `sheet` mode and keep `scale` low (256–320) for gist.

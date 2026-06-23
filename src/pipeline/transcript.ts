@@ -1,13 +1,11 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { run } from "./exec.js";
-import { checkDeps, installHint } from "./deps.js";
-import { bin } from "./bins.js";
+import { run } from "../system/exec.js";
+import { checkDeps, installHint } from "../system/deps.js";
+import { bin } from "../system/bins.js";
+import type { TranscriptResult } from "../types.js";
 
-export interface TranscriptResult {
-  text: string;
-  model: string;
-}
+export type { TranscriptResult } from "../types.js";
 
 /**
  * Transcribe audio with OpenAI Whisper (local CLI). Off by default in the tool;

@@ -1,12 +1,8 @@
 import { exists } from "./exec.js";
 import { bin } from "./bins.js";
+import type { DepStatus } from "../types.js";
 
-export interface DepStatus {
-  ffmpeg: boolean;
-  ffprobe: boolean;
-  ytdlp: boolean;
-  whisper: boolean;
-}
+export type { DepStatus } from "../types.js";
 
 let cached: DepStatus | null = null;
 
@@ -22,7 +18,7 @@ export async function checkDeps(): Promise<DepStatus> {
   return cached;
 }
 
-export function installHint(dep: keyof DepStatus): string {
+export function installHint(dep: "ffmpeg" | "ffprobe" | "ytdlp" | "whisper"): string {
   switch (dep) {
     case "ffmpeg":
     case "ffprobe":

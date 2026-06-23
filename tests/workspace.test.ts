@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { createWorkspace } from "../dist/workspace.js";
+import { createWorkspace } from "../dist/system/workspace.js";
 
 describe("createWorkspace", () => {
   it("creates an isolated directory and removes it on dispose", async () => {

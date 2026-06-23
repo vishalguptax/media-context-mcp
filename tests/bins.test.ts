@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from "vitest";
-import { bin } from "../dist/bins.js";
+import { bin } from "../dist/system/bins.js";
 
 describe("bin", () => {
   afterEach(() => {
