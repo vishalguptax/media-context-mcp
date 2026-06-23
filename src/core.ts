@@ -102,6 +102,9 @@ async function analyzeVideoMedia(
     maxFrames: o.maxFrames,
     grid: o.grid,
     sceneThreshold: o.sceneThreshold,
+    fps: o.fps,
+    crop: o.crop,
+    stripRows: o.stripRows,
     startSec: o.startSec,
     endSec: o.endSec,
     durationSec: info.durationSec,
@@ -128,13 +131,16 @@ async function analyzeVideoMedia(
     `Media: video  Source: ${resolved.origin}${resolved.downloaded ? " (downloaded)" : ""}`,
     `Duration: ${info.durationSec.toFixed(1)}s  Resolution: ${info.width}x${info.height}`,
     `Mode: ${o.mode}  Format: ${o.format}  Images: ${shownPaths.length}${result.images.length > shownPaths.length ? ` (capped from ${result.images.length})` : ""}`,
+    o.crop ? `Cropped to ${o.crop.width}x${o.crop.height} at (${o.crop.x},${o.crop.y}) before sampling.` : null,
     result.effectiveFps
-      ? `Sampling: ~${result.effectiveFps.toFixed(4)} fps, grid ${o.grid}x${o.grid}, tile width ${o.scale}px`
+      ? `Sampling: ~${result.effectiveFps.toFixed(4)} fps, tile width ${o.scale}px`
       : `Scene detection threshold ${o.sceneThreshold}, grid ${o.grid}x${o.grid}`,
-    o.mode === "sheet" || o.mode === "scenes"
-      ? "Each image is a montage; read tiles left-to-right, top-to-bottom in chronological order."
-      : "Images are individual stills in chronological order.",
-  ].join("\n");
+    o.mode === "filmstrip"
+      ? "Each image is a vertical filmstrip; read tiles top-to-bottom in chronological order and flag any frame whose on-screen value disagrees with the visual (e.g. label vs slider position)."
+      : o.mode === "sheet" || o.mode === "scenes"
+        ? "Each image is a montage; read tiles left-to-right, top-to-bottom in chronological order."
+        : "Images are individual stills in chronological order.",
+  ].filter(Boolean).join("\n");
 
   const transcript = o.transcript
     ? await runTranscript(resolved.filePath, o, deps, workspace, warnings)

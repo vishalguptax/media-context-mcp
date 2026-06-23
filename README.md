@@ -72,8 +72,11 @@ Auto-detects the media type. **Video** → frames/montage (+ optional transcript
 | `source` | — | Local file path (video/audio/image) or http(s) URL. |
 | `context` | — | Optional note framing the analysis, e.g. "signup flow, focus on the validation error". Echoed atop the summary. |
 | `detail` | — | `high` = readable stills for screen recordings (frames + scale 900 + png); `low` = cheap montage. Fills only fields you leave unset. |
-| `mode` | `sheet` | `sheet` \| `frames` \| `scenes`. |
+| `mode` | `sheet` | `sheet` \| `frames` \| `scenes` \| `filmstrip` (dense strip for transient UI glitches). |
 | `format` | `webp` | `webp` (smallest) \| `jpeg` \| `png` (crisp text). |
+| `fps` | auto | Explicit sampling rate; pair high (10–15) with `filmstrip`. |
+| `crop` | — | `{x,y,width,height}` pixel rect — zoom into a UI region for sharper frames/OCR. |
+| `stripRows` | `18` | Tiles stacked per image in `filmstrip` mode. |
 | `maxFrames` | `30` | Upper bound on sampled frames over the window. |
 | `grid` | `5` | Tiles per row/column for montage modes. |
 | `scale` | `320` | Per-frame width in px before tiling. Lower = fewer tokens. |

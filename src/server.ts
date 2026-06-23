@@ -39,7 +39,7 @@ export function createServer(): McpServer {
     {
       title: "Analyze a video, audio, or image file or URL",
       description:
-        "Turn a local media file or URL (video, audio, or image) into compact context a model can read — fully local, no paid APIs. Video: montage frames (mode 'sheet', cheapest), individual stills ('frames'), or scene changes ('scenes'); add transcript and/or ocr. Audio: speech transcript. Image: the picture plus optional OCR. For app/screen recordings use detail:'high' + ocr:true. Pass context to frame the analysis.",
+        "Turn a local media file or URL (video, audio, or image) into compact context a model can read — fully local, no paid APIs. Video: montage frames (mode 'sheet', cheapest default), individual stills ('frames'), or scene changes ('scenes'); add transcript and/or ocr. Audio: speech transcript. Image: the picture plus optional OCR. For app/screen recordings use detail:'high' + ocr:true. To catch a transient UI glitch (a flicker/jump lasting <1s), use mode:'filmstrip' with a narrow startSec/endSec window, a high fps (10–15), and a crop around the affected control — it stacks dense frames so you can spot a frame whose value disagrees with the visual. Use the cheap default for everything else. Pass context to frame the analysis.",
       inputSchema: ANALYZE_SHAPE,
     },
     async (args) => {

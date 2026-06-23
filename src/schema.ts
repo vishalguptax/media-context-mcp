@@ -21,10 +21,10 @@ export const ANALYZE_SHAPE = {
     .optional()
     .describe("high = readable stills for screen recordings (frames + large scale + png); low = cheap montage. Overrides only the fields you leave unset."),
   mode: z
-    .enum(["sheet", "frames", "scenes"])
+    .enum(["sheet", "frames", "scenes", "filmstrip"])
     .default("sheet")
     .describe(
-      "sheet = montage grids (cheapest, default); frames = individual stills; scenes = only scene-change montages."
+      "sheet = montage grids (cheapest, default); frames = individual stills; scenes = only scene-change montages; filmstrip = dense near-native-fps vertical strip for catching transient UI glitches (pair with a narrow startSec/endSec window, fps, and crop)."
     ),
   format: z
     .enum(["webp", "jpeg", "png"])
@@ -57,6 +57,28 @@ export const ANALYZE_SHAPE = {
     .max(0.9)
     .default(0.4)
     .describe("Scene-change sensitivity for 'scenes' mode (higher = fewer cuts)."),
+  fps: z
+    .number()
+    .min(0.01)
+    .max(60)
+    .optional()
+    .describe("Explicit sampling rate (frames/sec); overrides the auto rate for sheet/frames/filmstrip. Use a high value (e.g. 10–15) with filmstrip to catch sub-second glitches."),
+  crop: z
+    .object({
+      x: z.number().int().min(0),
+      y: z.number().int().min(0),
+      width: z.number().int().min(1),
+      height: z.number().int().min(1),
+    })
+    .optional()
+    .describe("Pixel rectangle to crop before sampling — zoom into a UI region (e.g. a slider band) for sharper frames/OCR."),
+  stripRows: z
+    .number()
+    .int()
+    .min(2)
+    .max(40)
+    .default(18)
+    .describe("Tiles stacked per image in 'filmstrip' mode."),
   startSec: z.number().min(0).optional().describe("Window start in seconds."),
   endSec: z.number().min(0).optional().describe("Window end in seconds."),
   transcript: z

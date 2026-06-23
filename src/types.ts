@@ -37,7 +37,15 @@ export interface ProbeInfo {
 export type MediaType = "video" | "audio" | "image";
 
 /** Frame-extraction strategy. */
-export type Mode = "sheet" | "frames" | "scenes";
+export type Mode = "sheet" | "frames" | "scenes" | "filmstrip";
+
+/** Pixel rectangle to crop before sampling (zoom into a UI region). */
+export interface CropRegion {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
 
 /** Encoded image format. webp is smallest (fewest tokens), png is lossless. */
 export type ImageFormat = "webp" | "jpeg" | "png";
@@ -55,6 +63,12 @@ export interface ExtractParams {
   startSec?: number;
   endSec?: number;
   durationSec: number;
+  /** Explicit sampling rate; overrides the auto rate for sheet/frames/filmstrip. */
+  fps?: number;
+  /** Crop applied before sampling, for all video modes. */
+  crop?: CropRegion;
+  /** Tiles per vertical strip in filmstrip mode. */
+  stripRows?: number;
 }
 
 /** Result of a frame extraction. */
@@ -81,6 +95,9 @@ export interface AnalyzeOptions {
   grid?: number;
   scale?: number;
   sceneThreshold?: number;
+  fps?: number;
+  crop?: CropRegion;
+  stripRows?: number;
   startSec?: number;
   endSec?: number;
   transcript?: boolean;

@@ -90,18 +90,21 @@ function timeArgs(p: ExtractParams): string[] {
 }
 
 /**
- * Extract visual context from the video. `sheet` and `scenes` tile frames into
- * montage images to minimize the number of images an agent must read; `frames`
- * emits individual stills.
+ * Extract visual context from the video. `sheet`/`scenes` tile frames into
+ * montage images to minimize the number of images an agent reads; `frames`
+ * emits individual stills; `filmstrip` stacks dense near-native-fps frames into
+ * a tall vertical strip for spotting transient UI glitches. An optional `crop`
+ * zooms into a region first, and `fps` overrides the auto sampling rate.
  */
 export async function extract(p: ExtractParams): Promise<ExtractResult> {
   await fs.mkdir(p.outDir, { recursive: true });
   const span = windowSeconds(p);
   const ext = FORMAT_EXT[p.format];
   const q = FORMAT_QUALITY[p.format];
+  const crop = cropPrefix(p);
 
   if (p.mode === "scenes") {
-    const vf = `select='gt(scene,${p.sceneThreshold})',scale=${p.scale}:-2,tile=${p.grid}x${p.grid}`;
+    const vf = `${crop}select='gt(scene,${p.sceneThreshold})',scale=${p.scale}:-2,tile=${p.grid}x${p.grid}`;
     const pattern = path.join(p.outDir, `scene_%03d.${ext}`);
     const args = [
       ...timeArgs(p),
@@ -126,10 +129,37 @@ export async function extract(p: ExtractParams): Promise<ExtractResult> {
   }
 
   const targetFrames = Math.max(1, p.maxFrames);
-  const fps = targetFrames / span;
+  const fps = p.fps && p.fps > 0 ? p.fps : targetFrames / span;
+
+  if (p.mode === "filmstrip") {
+    const rows = p.stripRows ?? 18;
+    const strips = Math.max(1, Math.ceil(targetFrames / rows));
+    const vf = `${crop}fps=${fps.toFixed(6)},scale=${p.scale}:-2,tile=1x${rows}`;
+    const pattern = path.join(p.outDir, `strip_%03d.${ext}`);
+    const args = [
+      ...timeArgs(p),
+      "-i",
+      p.filePath,
+      "-vf",
+      vf,
+      "-frames:v",
+      String(strips),
+      "-fps_mode",
+      "vfr",
+      ...q,
+      "-y",
+      pattern,
+    ];
+    const res = await run(bin("ffmpeg"), args, { timeoutMs: 8 * 60 * 1000 });
+    if (res.code !== 0) {
+      throw new Error(`ffmpeg (filmstrip) failed: ${res.stderr.slice(-400).trim()}`);
+    }
+    const images = await listImages(p.outDir, ext);
+    return { images, frameCount: images.length, effectiveFps: fps };
+  }
 
   if (p.mode === "frames") {
-    const vf = `fps=${fps.toFixed(6)},scale=${p.scale}:-2`;
+    const vf = `${crop}fps=${fps.toFixed(6)},scale=${p.scale}:-2`;
     const pattern = path.join(p.outDir, `frame_%04d.${ext}`);
     const args = [
       ...timeArgs(p),
@@ -153,7 +183,7 @@ export async function extract(p: ExtractParams): Promise<ExtractResult> {
 
   const perSheet = p.grid * p.grid;
   const sheets = Math.max(1, Math.ceil(targetFrames / perSheet));
-  const vf = `fps=${fps.toFixed(6)},scale=${p.scale}:-2,tile=${p.grid}x${p.grid}`;
+  const vf = `${crop}fps=${fps.toFixed(6)},scale=${p.scale}:-2,tile=${p.grid}x${p.grid}`;
   const pattern = path.join(p.outDir, `sheet_%03d.${ext}`);
   const args = [
     ...timeArgs(p),
@@ -175,6 +205,11 @@ export async function extract(p: ExtractParams): Promise<ExtractResult> {
   }
   const images = await listImages(p.outDir, ext);
   return { images, frameCount: images.length, effectiveFps: fps };
+}
+
+/** ffmpeg `crop=w:h:x:y,` prefix, or empty when no crop requested. */
+function cropPrefix(p: ExtractParams): string {
+  return p.crop ? `crop=${p.crop.width}:${p.crop.height}:${p.crop.x}:${p.crop.y},` : "";
 }
 
 async function listImages(dir: string, ext: string): Promise<string[]> {
