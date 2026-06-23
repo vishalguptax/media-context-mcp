@@ -1,6 +1,6 @@
 {
   "name": "media-context",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Give Claude local context from a video, audio, or image file/URL: montage frames, scene detection, Whisper transcript and Tesseract OCR. No paid APIs.",
   "author": { "name": "media-context-mcp" },
   "mcpServers": {

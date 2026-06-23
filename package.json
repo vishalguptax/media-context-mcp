@@ -1,6 +1,6 @@
 {
   "name": "media-context-mcp",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Local MCP server to analyze video, audio & images — extract frames, transcribe speech, and OCR on-screen text. Lets Claude, Cursor & VS Code watch videos, read screen recordings, and transcribe audio. No API keys, no cloud.",
   "type": "module",
   "author": "Vishal Gupta (https://github.com/vishalguptax)",
