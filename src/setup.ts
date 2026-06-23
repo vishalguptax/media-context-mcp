@@ -79,7 +79,8 @@ function spawnInherit(bin: string, args: string[]): Promise<number> {
 /** Install the external binaries media-context-mcp can use, via the OS package manager. */
 export async function runSetup(argv: string[]): Promise<number> {
   const platform = process.platform as Platform;
-  const wantWhisper = argv.includes("--whisper") || argv.includes("--all");
+  const wantWhisper =
+    argv.includes("--audio") || argv.includes("--whisper") || argv.includes("--all");
 
   process.stdout.write("media-context-mcp setup\n");
   process.stdout.write(`Platform: ${platform}\n\n`);
@@ -96,7 +97,7 @@ export async function runSetup(argv: string[]): Promise<number> {
 
   for (const tool of TOOLS) {
     if (tool.optIn && !wantWhisper) {
-      process.stdout.write(`skip  ${tool.label}\n      (pass --whisper to include it)\n`);
+      process.stdout.write(`skip  ${tool.label}\n      (pass --audio to include it)\n`);
       continue;
     }
     if (present[tool.key]) {
@@ -121,7 +122,7 @@ export async function runSetup(argv: string[]): Promise<number> {
 
   process.stdout.write("\nDone. Re-run `npx media-context-mcp setup` any time, or restart your MCP client to pick up new tools.\n");
   if (!wantWhisper) {
-    process.stdout.write("For audio transcripts, run with --whisper.\n");
+    process.stdout.write("For audio transcripts, run with --audio.\n");
   }
   return failures.length > 0 ? 1 : 0;
 }

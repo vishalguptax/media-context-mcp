@@ -80,14 +80,27 @@ args = ["-y", "media-context-mcp"]
 ```
 </details>
 
-**2. Install the media tools** (one command, uses your OS package manager):
+**2. Run setup** — one command installs what the server needs via your OS package manager:
 
 ```bash
-npx media-context-mcp setup            # ffmpeg, yt-dlp, tesseract
-npx media-context-mcp setup --whisper  # add audio transcription
+npx media-context-mcp setup          # everything for files + URLs + text
+npx media-context-mcp setup --audio  # also enable transcription
 ```
 
-Only `ffmpeg` is required; the rest are optional and unlock one feature each. `check_media_deps` shows what's detected. To install by hand: `ffmpeg`/`ffprobe`, `yt-dlp` (URLs), `tesseract` (OCR), `whisper` (transcripts) — via `winget` / `brew` / `apt` / `pip`.
+`check_media_deps` shows what's ready at any time. Prefer to install by hand?
+
+<details>
+<summary>Manual dependencies</summary>
+
+The package ships no binaries — it drives tools on your machine. Only `ffmpeg` is required; the rest are optional, one feature each.
+
+| Tool | For | Install |
+|------|-----|---------|
+| `ffmpeg` + `ffprobe` | **required** | `winget install Gyan.FFmpeg` · `brew install ffmpeg` · `apt install ffmpeg` |
+| `yt-dlp` | URLs | `winget install yt-dlp.yt-dlp` · `brew install yt-dlp` · `pip install -U yt-dlp` |
+| `tesseract` | on-screen text | `winget install UB-Mannheim.TesseractOCR` · `brew install tesseract` · `apt install tesseract-ocr` |
+| `whisper` | transcription | `pip install -U openai-whisper` |
+</details>
 
 ## Examples
 
@@ -107,8 +120,8 @@ The server exposes two tools, which your assistant calls automatically:
 
 | Tool | What it does |
 |------|--------------|
-| **`analyze_media`** | Turn a video, audio, or image (file or URL) into model-readable context. Auto-detects the type — video → montage frames / stills / scene montages / dense filmstrip; audio → Whisper transcript; image → the picture plus optional OCR. Supports cropping, time windows, OCR language, and sampling rate. |
-| **`check_media_deps`** | Report which of `ffmpeg`, `yt-dlp`, `whisper`, and `tesseract` are installed, with install hints. |
+| **`analyze_media`** | Turn a video, audio, or image — file or URL — into model-readable context. Auto-detects the type: video → frames, stills, scene montages, or a dense filmstrip; audio → a transcript; image → the picture plus optional text recognition. Supports cropping, time windows, language, and sampling rate. |
+| **`check_media_deps`** | Report which optional capabilities (URL fetching, transcription, text recognition) are ready, with setup hints. |
 
 Everything runs locally, and each call cleans up its temporary files when it returns.
 
