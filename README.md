@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./assets/banner.svg" alt="media-context-mcp" width="100%">
+  <img src="./assets/banner.svg" alt="media-context-mcp — local MCP server to analyze video, audio and images for AI assistants" width="100%">
 </p>
 
 <p align="center">
@@ -25,6 +25,16 @@ Your assistant can read text and look at a picture, but it can't watch a video o
 - **Cheap by design** — frames are tiled and downscaled, so a long clip costs a couple of images instead of hundreds.
 - **Private & local** — everything runs on your machine. No API keys, no uploads.
 - **Works everywhere** — any MCP client: Claude, Cursor, VS Code, and more.
+
+## Use cases
+
+- **Give an LLM video context** — turn a clip into frames and text your model can reason over.
+- **Analyze a screen recording** — read the on-screen error, walk a UI flow, or debug a bug video from QA.
+- **Summarize a YouTube video** — paste a link, get the gist plus a transcript.
+- **Transcribe audio** — meetings, standups, voice notes, podcasts → text, locally.
+- **Extract text from a screenshot** — pull an exact error, stack trace, or table out of an image.
+- **Extract frames from a video** — sampled stills for the model to read.
+- **Catch UI glitches** — frame-by-frame, including flickers shorter than a second.
 
 ## Install
 
@@ -103,7 +113,7 @@ npx media-context-mcp setup          # everything for files + URLs + text
 npx media-context-mcp setup --audio  # also enable transcription
 ```
 
-`check_media_deps` shows what's ready at any time. Prefer to install by hand?
+`check_media_deps` shows what's ready at any time, and `npx media-context-mcp setup --uninstall` removes the tools again. Prefer to install by hand?
 
 <details>
 <summary>Manual dependencies</summary>
@@ -140,6 +150,20 @@ The server exposes two tools, which your assistant calls automatically.
 | **`check_media_deps`** | Report which optional capabilities (URL fetching, transcription, text recognition) are ready, with setup hints. |
 
 Everything runs locally, and each call cleans up its temporary files when it returns.
+
+## FAQ
+
+**Can Claude (or any LLM) watch a video?** Not directly — models take images and text, not video. This server extracts frames and audio transcripts so your assistant can analyze the video.
+
+**How do I give Claude Code, Cursor, or VS Code video context?** Add the server (see [Install](#install)), then ask in plain language — it works in any MCP client.
+
+**Can it convert video or audio to text?** Yes — it samples frames for the model to read and transcribes speech locally.
+
+**Does it work offline, without an API key?** Yes. Everything runs on your machine; nothing is uploaded and no keys are required.
+
+**Does it support YouTube and other links?** Yes — any `yt-dlp`-supported URL.
+
+**Is it free?** Yes, open source under Apache-2.0.
 
 ## Development
 

@@ -9,6 +9,8 @@ interface Tool {
   desc: string;
   /** Install command per platform: [binary, ...args]. */
   cmd: Partial<Record<Platform, string[]>>;
+  /** Uninstall command per platform. */
+  remove: Partial<Record<Platform, string[]>>;
   /** Shown when no automated command fits the platform / install fails. */
   manual: string;
   /** Only installed when --audio is passed (large / needs Python). */
@@ -47,6 +49,11 @@ const TOOLS: Tool[] = [
       darwin: ["brew", "install", "ffmpeg"],
       linux: ["sudo", "apt-get", "install", "-y", "ffmpeg"],
     },
+    remove: {
+      win32: ["winget", "uninstall", "-e", "--id", "Gyan.FFmpeg"],
+      darwin: ["brew", "uninstall", "ffmpeg"],
+      linux: ["sudo", "apt-get", "remove", "-y", "ffmpeg"],
+    },
     manual: "https://ffmpeg.org/download.html",
   },
   {
@@ -57,6 +64,11 @@ const TOOLS: Tool[] = [
       win32: WINGET("yt-dlp.yt-dlp"),
       darwin: ["brew", "install", "yt-dlp"],
       linux: ["sudo", "apt-get", "install", "-y", "yt-dlp"],
+    },
+    remove: {
+      win32: ["winget", "uninstall", "-e", "--id", "yt-dlp.yt-dlp"],
+      darwin: ["brew", "uninstall", "yt-dlp"],
+      linux: ["sudo", "apt-get", "remove", "-y", "yt-dlp"],
     },
     manual: "pip install -U yt-dlp",
   },
@@ -69,6 +81,11 @@ const TOOLS: Tool[] = [
       darwin: ["brew", "install", "tesseract"],
       linux: ["sudo", "apt-get", "install", "-y", "tesseract-ocr"],
     },
+    remove: {
+      win32: ["winget", "uninstall", "-e", "--id", "UB-Mannheim.TesseractOCR"],
+      darwin: ["brew", "uninstall", "tesseract"],
+      linux: ["sudo", "apt-get", "remove", "-y", "tesseract-ocr"],
+    },
     manual: "https://github.com/tesseract-ocr/tesseract",
   },
   {
@@ -79,6 +96,11 @@ const TOOLS: Tool[] = [
       win32: ["pip", "install", "-U", "openai-whisper"],
       darwin: ["pip3", "install", "-U", "openai-whisper"],
       linux: ["pip3", "install", "-U", "openai-whisper"],
+    },
+    remove: {
+      win32: ["pip", "uninstall", "-y", "openai-whisper"],
+      darwin: ["pip3", "uninstall", "-y", "openai-whisper"],
+      linux: ["pip3", "uninstall", "-y", "openai-whisper"],
     },
     manual: "pip install -U openai-whisper",
     optIn: true,
@@ -99,6 +121,10 @@ function spawnInherit(bin: string, args: string[]): Promise<number> {
 
 /** Install the external tools media-context-mcp drives, via the OS package manager. */
 export async function runSetup(argv: string[]): Promise<number> {
+  if (argv.includes("--uninstall") || argv.includes("--remove")) {
+    return runUninstall();
+  }
+
   const platform = process.platform as Platform;
   const wantAudio =
     argv.includes("--audio") || argv.includes("--whisper") || argv.includes("--all");
@@ -154,6 +180,54 @@ export async function runSetup(argv: string[]): Promise<number> {
   if (!wantAudio) {
     out(`  ${dim("Tip: enable transcription with")} ${bold("npx media-context-mcp setup --audio")}`);
   }
+  out();
+  return failures.length > 0 ? 1 : 0;
+}
+
+/** Remove the tools setup installed (system-wide — warns before touching shared tools). */
+async function runUninstall(): Promise<number> {
+  const platform = process.platform as Platform;
+
+  out();
+  out(`  ${teal("◆")} ${bold("media-context")} ${dim("uninstall")}`);
+  out(`  ${yellow("⚠")} ${dim("These are system-wide tools — remove only if nothing else uses them.")}`);
+  out();
+
+  const deps = await checkDeps();
+  const present: Record<string, boolean> = {
+    ffmpeg: deps.ffmpeg && deps.ffprobe,
+    ytdlp: deps.ytdlp,
+    tesseract: deps.tesseract,
+    whisper: deps.whisper,
+  };
+
+  const failures: Tool[] = [];
+
+  for (const tool of TOOLS) {
+    if (!present[tool.key]) {
+      row(dim("○"), tool, "not installed");
+      continue;
+    }
+    const cmd = tool.remove[platform];
+    if (!cmd) {
+      row(yellow("!"), tool, "remove manually");
+      failures.push(tool);
+      continue;
+    }
+    out();
+    out(`  ${teal("→")} ${bold("removing " + tool.name)} ${dim(cmd.join(" "))}`);
+    const code = await spawnInherit(cmd[0], cmd.slice(1));
+    out();
+    if (code === 0) {
+      row(green("✓"), tool, "removed");
+    } else {
+      row(red("✗"), tool, "failed");
+      failures.push(tool);
+    }
+  }
+
+  out();
+  out(`  ${dim("Also remove the server from your MCP client config, and")} ${bold("npm uninstall -g media-context-mcp")} ${dim("if installed globally.")}`);
   out();
   return failures.length > 0 ? 1 : 0;
 }
