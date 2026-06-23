@@ -7,11 +7,13 @@ describe("bin", () => {
     delete process.env.FFMPEG_BIN;
   });
 
-  it("returns the bare command name by default", () => {
-    expect(bin("ffmpeg")).toBe("ffmpeg");
-    expect(bin("ffprobe")).toBe("ffprobe");
-    expect(bin("ytdlp")).toBe("yt-dlp");
-    expect(bin("whisper")).toBe("whisper");
+  it("returns the bare name or a detected install path by default", () => {
+    // Without an override it's either the bare command (PATH) or an absolute
+    // path to a known install location — both end in the tool's name.
+    expect(bin("ffmpeg")).toMatch(/ffmpeg(\.exe)?$/);
+    expect(bin("ffprobe")).toMatch(/ffprobe(\.exe)?$/);
+    expect(bin("ytdlp")).toMatch(/yt-dlp(\.exe)?$/);
+    expect(bin("whisper")).toMatch(/whisper(\.exe)?$/);
   });
 
   it("honors an environment override", () => {
@@ -21,6 +23,7 @@ describe("bin", () => {
 
   it("ignores a blank override", () => {
     process.env.FFMPEG_BIN = "   ";
-    expect(bin("ffmpeg")).toBe("ffmpeg");
+    // Blank override is ignored → falls back to a detected path or the bare name.
+    expect(bin("ffmpeg")).toMatch(/ffmpeg(\.exe)?$/);
   });
 });

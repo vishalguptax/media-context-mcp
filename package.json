@@ -1,6 +1,6 @@
 {
   "name": "media-context-mcp",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "mcpName": "io.github.vishalguptax/media-context-mcp",
   "description": "Local MCP server to analyze video, audio & images — extract frames, transcribe speech, and OCR on-screen text. Lets Claude, Cursor & VS Code watch videos, read screen recordings, and transcribe audio. No API keys, no cloud.",
   "type": "module",

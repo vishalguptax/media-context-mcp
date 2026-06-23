@@ -1,10 +1,13 @@
 /**
- * Resolves the executable to invoke for each external dependency. Defaults to
- * the bare command name (found on PATH), but every binary can be overridden
- * with an absolute path via an environment variable. This matters because MCP
- * clients are frequently launched from a GUI with a minimal PATH that omits,
- * for example, a Python Scripts directory where whisper lives.
+ * Resolves the executable to invoke for each external dependency.
+ *
+ * Resolution order: an explicit `*_BIN` env override, then well-known install
+ * locations (so a GUI-launched client with a minimal PATH still finds tools
+ * that `setup` installed off-PATH — e.g. Tesseract in Program Files or Whisper
+ * in a Python Scripts dir), then the bare command name from PATH.
  */
+import { existsSync, readdirSync } from "node:fs";
+import path from "node:path";
 import type { BinName } from "../types.js";
 
 export type { BinName } from "../types.js";
@@ -27,5 +30,50 @@ const DEFAULTS = {
 
 export function bin(name: BinName): string {
   const override = process.env[ENV_KEYS[name]];
-  return override && override.trim() ? override.trim() : DEFAULTS[name];
+  if (override && override.trim()) return override.trim();
+
+  for (const candidate of candidates(name)) {
+    if (existsSync(candidate)) return candidate;
+  }
+  return DEFAULTS[name];
+}
+
+/** Known absolute install locations to probe (Windows only; PATH covers *nix). */
+function candidates(name: BinName): string[] {
+  if (process.platform !== "win32") return [];
+
+  const programFiles = process.env.ProgramFiles ?? "C:\\Program Files";
+  const programFiles86 = process.env["ProgramFiles(x86)"] ?? "C:\\Program Files (x86)";
+  const local = process.env.LOCALAPPDATA ?? "";
+  const wingetLinks = local && path.join(local, "Microsoft", "WinGet", "Links");
+
+  switch (name) {
+    case "ffmpeg":
+      return wingetLinks ? [path.join(wingetLinks, "ffmpeg.exe")] : [];
+    case "ffprobe":
+      return wingetLinks ? [path.join(wingetLinks, "ffprobe.exe")] : [];
+    case "ytdlp":
+      return wingetLinks ? [path.join(wingetLinks, "yt-dlp.exe")] : [];
+    case "tesseract":
+      return [
+        path.join(programFiles, "Tesseract-OCR", "tesseract.exe"),
+        path.join(programFiles86, "Tesseract-OCR", "tesseract.exe"),
+      ];
+    case "whisper":
+      return pythonScriptDirs().map((d) => path.join(d, "whisper.exe"));
+  }
+}
+
+/** Discover `Scripts` dirs of installed Python versions (where pip console scripts land). */
+function pythonScriptDirs(): string[] {
+  const local = process.env.LOCALAPPDATA;
+  if (!local) return [];
+  const root = path.join(local, "Programs", "Python");
+  try {
+    return readdirSync(root)
+      .filter((e) => e.startsWith("Python"))
+      .map((e) => path.join(root, e, "Scripts"));
+  } catch {
+    return [];
+  }
 }
