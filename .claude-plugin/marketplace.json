@@ -1,0 +1,15 @@
+{
+  "name": "video-context",
+  "owner": { "name": "video-context-mcp" },
+  "metadata": {
+    "description": "Video understanding for Claude Code — analyze a file or URL as low-token visual context.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "video-context",
+      "source": "./plugin",
+      "description": "Turn a video file or URL into contact sheets, frames, scene-change montages and optional transcript via ffmpeg + yt-dlp + whisper."
+    }
+  ]
+}

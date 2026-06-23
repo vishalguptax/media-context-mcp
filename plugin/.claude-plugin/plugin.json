@@ -1,0 +1,12 @@
+{
+  "name": "video-context",
+  "version": "0.1.0",
+  "description": "Give Claude visual context from a video file or URL: contact sheets, frames, scene detection and optional transcript.",
+  "author": { "name": "video-context-mcp" },
+  "mcpServers": {
+    "video-context": {
+      "command": "npx",
+      "args": ["-y", "video-context-mcp"]
+    }
+  }
+}

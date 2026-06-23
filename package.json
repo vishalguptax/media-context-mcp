@@ -1,0 +1,45 @@
+{
+  "name": "video-context-mcp",
+  "version": "0.1.0",
+  "description": "MCP server that turns a video file or URL into low-token visual context (contact sheets, frames, scene detection) plus optional transcript, for AI agents.",
+  "type": "module",
+  "bin": {
+    "video-context-mcp": "dist/index.js"
+  },
+  "main": "dist/index.js",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js",
+    "prepublishOnly": "npm run build",
+    "typecheck": "tsc --noEmit"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "video",
+    "ffmpeg",
+    "yt-dlp",
+    "transcript",
+    "claude",
+    "ai",
+    "frames"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.5.0"
+  }
+}
