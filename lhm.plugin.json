@@ -1,0 +1,46 @@
+{
+  "identifier": "vishalguptax-media-context-mcp",
+  "name": "media-context-mcp",
+  "version": "0.1.3",
+  "description": "Local MCP server to analyze video, audio & images: frames, transcripts, on-screen text. No API keys, no cloud.",
+  "author": "Vishal Gupta",
+  "authorUrl": "https://github.com/vishalguptax",
+  "homepage": "https://github.com/vishalguptax/media-context-mcp",
+  "icon": "🎬",
+  "category": "development",
+  "tags": [
+    "video",
+    "audio",
+    "image",
+    "ocr",
+    "transcription",
+    "speech-to-text",
+    "frames",
+    "ffmpeg",
+    "whisper",
+    "screen-recording",
+    "local"
+  ],
+  "tools": [
+    {
+      "name": "analyze_media",
+      "description": "Turn a video, audio, or image (file or URL) into model-readable context — frames/montage/filmstrip, speech transcript, and on-screen OCR. Auto-detects the media type.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "source": { "type": "string", "description": "Local file path (video/audio/image) or http(s) URL." },
+          "mode": { "type": "string", "enum": ["sheet", "frames", "scenes", "filmstrip"], "description": "Frame-extraction strategy." },
+          "transcript": { "type": "boolean", "description": "Also produce a speech transcript." },
+          "ocr": { "type": "boolean", "description": "Extract on-screen text." },
+          "detectJumps": { "type": "boolean", "description": "Track an on-screen number and report jump-back glitches." }
+        },
+        "required": ["source"]
+      }
+    },
+    {
+      "name": "check_media_deps",
+      "description": "Report which optional capabilities (URL fetching, transcription, on-screen text) are ready, with setup hints.",
+      "inputSchema": { "type": "object", "properties": {} }
+    }
+  ]
+}

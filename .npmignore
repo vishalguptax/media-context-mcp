@@ -8,6 +8,7 @@ assets/
 .github/
 docs/
 server.json
+lhm.plugin.json
 smithery.yaml
 tsconfig.json
 vitest.config.ts
