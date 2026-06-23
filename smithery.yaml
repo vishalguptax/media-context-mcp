@@ -1,0 +1,23 @@
+# Smithery configuration — https://smithery.ai/docs
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    properties:
+      whisperBin:
+        type: string
+        title: Whisper binary path
+        description: Optional absolute path to the whisper executable (for transcripts).
+      tesseractBin:
+        type: string
+        title: Tesseract binary path
+        description: Optional absolute path to the tesseract executable (for OCR).
+  commandFunction: |
+    (config) => ({
+      command: 'npx',
+      args: ['-y', 'media-context-mcp'],
+      env: {
+        ...(config.whisperBin ? { WHISPER_BIN: config.whisperBin } : {}),
+        ...(config.tesseractBin ? { TESSERACT_BIN: config.tesseractBin } : {})
+      }
+    })

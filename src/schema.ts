@@ -65,13 +65,13 @@ export const ANALYZE_SHAPE = {
     .describe("Explicit sampling rate (frames/sec); overrides the auto rate for sheet/frames/filmstrip. Use a high value (e.g. 10–15) with filmstrip to catch sub-second glitches."),
   crop: z
     .object({
-      x: z.number().int().min(0),
-      y: z.number().int().min(0),
-      width: z.number().int().min(1),
-      height: z.number().int().min(1),
+      x: z.number().min(0),
+      y: z.number().min(0),
+      width: z.number().gt(0),
+      height: z.number().gt(0),
     })
     .optional()
-    .describe("Pixel rectangle to crop before sampling — zoom into a UI region (e.g. a slider band) for sharper frames/OCR."),
+    .describe("Rectangle to crop before sampling — zoom into a UI region for sharper frames/OCR. Pixels, or fractions 0–1 of the frame (e.g. {x:0,y:0.7,width:1,height:0.3} = bottom 30%)."),
   stripRows: z
     .number()
     .int()

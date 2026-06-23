@@ -12,6 +12,7 @@ import type {
   AnalyzeOptions,
   AnalyzeResult,
   AnalyzeImage,
+  CropRegion,
   DepStatus,
   ImageFormat,
   ProbeInfo,
@@ -103,7 +104,7 @@ async function analyzeVideoMedia(
     grid: o.grid,
     sceneThreshold: o.sceneThreshold,
     fps: o.fps,
-    crop: o.crop,
+    crop: normalizeCrop(o.crop, info.width, info.height),
     stripRows: o.stripRows,
     startSec: o.startSec,
     endSec: o.endSec,
@@ -329,6 +330,35 @@ async function runOcr(
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
+
+/**
+ * Resolve a crop to pixels. Values where every component is ≤ 1 are treated as
+ * fractions of the frame (e.g. height 0.3 = bottom-ish third); anything larger
+ * is taken as literal pixels.
+ */
+function normalizeCrop(
+  crop: CropRegion | undefined,
+  width: number,
+  height: number
+): CropRegion | undefined {
+  if (!crop) return undefined;
+  const fractional =
+    crop.x <= 1 && crop.y <= 1 && crop.width <= 1 && crop.height <= 1 && width > 0 && height > 0;
+  if (fractional) {
+    return {
+      x: Math.round(crop.x * width),
+      y: Math.round(crop.y * height),
+      width: Math.max(1, Math.round(crop.width * width)),
+      height: Math.max(1, Math.round(crop.height * height)),
+    };
+  }
+  return {
+    x: Math.round(crop.x),
+    y: Math.round(crop.y),
+    width: Math.max(1, Math.round(crop.width)),
+    height: Math.max(1, Math.round(crop.height)),
+  };
+}
 
 async function toFrame(filePath: string, format: ImageFormat): Promise<AnalyzeImage> {
   const buf = await fs.readFile(filePath);

@@ -69,6 +69,19 @@ describe.skipIf(!deps.ffmpeg || !deps.ffprobe)("analyzeMedia — video (library 
     expect(r.summary).toContain("Context from caller: the signup flow");
   });
 
+  it("accepts a fractional crop and a filmstrip window", async () => {
+    const r = await analyzeMedia({
+      source: clip,
+      mode: "filmstrip",
+      fps: 4,
+      stripRows: 6,
+      crop: { x: 0, y: 0.5, width: 1, height: 0.5 }, // bottom half, as fractions
+    });
+    expect(r.mode).toBe("filmstrip");
+    expect(r.images.length).toBeGreaterThanOrEqual(1);
+    expect(r.summary).toContain("Cropped to");
+  });
+
   it("runs the OCR path (returns text or a clear warning)", async () => {
     const r = await analyzeVideo({ source: clip, ocr: true, maxFrames: 4 });
     const ranOcr = r.ocrText !== undefined || r.warnings.some((w) => /OCR/i.test(w));

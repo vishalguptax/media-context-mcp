@@ -129,7 +129,12 @@ export async function extract(p: ExtractParams): Promise<ExtractResult> {
   }
 
   const targetFrames = Math.max(1, p.maxFrames);
-  const fps = p.fps && p.fps > 0 ? p.fps : targetFrames / span;
+  // When the duration is unknown (live streams, some VFR files) and no explicit
+  // window/fps is given, fall back to 1 fps so frames spread across the stream
+  // instead of all landing in the first second.
+  const knownSpan =
+    p.durationSec > 0 || (p.endSec !== undefined && p.endSec > (p.startSec ?? 0));
+  const fps = p.fps && p.fps > 0 ? p.fps : knownSpan ? targetFrames / span : 1;
 
   if (p.mode === "filmstrip") {
     const rows = p.stripRows ?? 18;
