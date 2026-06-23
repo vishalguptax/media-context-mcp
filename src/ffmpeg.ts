@@ -1,6 +1,7 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { run } from "./exec.js";
+import { bin } from "./bins.js";
 
 export interface ProbeInfo {
   durationSec: number;
@@ -10,7 +11,7 @@ export interface ProbeInfo {
 
 export async function probe(filePath: string): Promise<ProbeInfo> {
   const res = await run(
-    "ffprobe",
+    bin("ffprobe"),
     [
       "-v",
       "error",
@@ -104,7 +105,7 @@ export async function extract(p: ExtractParams): Promise<ExtractResult> {
       "-y",
       pattern,
     ];
-    const res = await run("ffmpeg", args, { timeoutMs: 8 * 60 * 1000 });
+    const res = await run(bin("ffmpeg"), args, { timeoutMs: 8 * 60 * 1000 });
     if (res.code !== 0) {
       throw new Error(`ffmpeg (scenes) failed: ${res.stderr.slice(-400).trim()}`);
     }
@@ -129,7 +130,7 @@ export async function extract(p: ExtractParams): Promise<ExtractResult> {
       "-y",
       pattern,
     ];
-    const res = await run("ffmpeg", args, { timeoutMs: 8 * 60 * 1000 });
+    const res = await run(bin("ffmpeg"), args, { timeoutMs: 8 * 60 * 1000 });
     if (res.code !== 0) {
       throw new Error(`ffmpeg (frames) failed: ${res.stderr.slice(-400).trim()}`);
     }
@@ -149,12 +150,12 @@ export async function extract(p: ExtractParams): Promise<ExtractResult> {
     vf,
     "-frames:v",
     String(sheets),
-    "-vsync",
+    "-fps_mode",
     "vfr",
     "-y",
     pattern,
   ];
-  const res = await run("ffmpeg", args, { timeoutMs: 8 * 60 * 1000 });
+  const res = await run(bin("ffmpeg"), args, { timeoutMs: 8 * 60 * 1000 });
   if (res.code !== 0) {
     throw new Error(`ffmpeg (sheet) failed: ${res.stderr.slice(-400).trim()}`);
   }

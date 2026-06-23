@@ -2,6 +2,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { run } from "./exec.js";
 import { checkDeps, installHint } from "./deps.js";
+import { bin } from "./bins.js";
 
 export interface TranscriptResult {
   text: string;
@@ -23,7 +24,7 @@ export async function transcribe(
   }
 
   const res = await run(
-    "whisper",
+    bin("whisper"),
     [
       filePath,
       "--model",

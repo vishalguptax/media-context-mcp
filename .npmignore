@@ -1,6 +1,8 @@
 src/
 plugin/
 .claude-plugin/
+tests/
 tsconfig.json
+vitest.config.ts
 *.tsbuildinfo
 .gitignore

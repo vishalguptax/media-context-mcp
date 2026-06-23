@@ -1,4 +1,5 @@
 import { exists } from "./exec.js";
+import { bin } from "./bins.js";
 
 export interface DepStatus {
   ffmpeg: boolean;
@@ -12,10 +13,10 @@ let cached: DepStatus | null = null;
 export async function checkDeps(): Promise<DepStatus> {
   if (cached) return cached;
   const [ffmpeg, ffprobe, ytdlp, whisper] = await Promise.all([
-    exists("ffmpeg", "-version"),
-    exists("ffprobe", "-version"),
-    exists("yt-dlp", "--version"),
-    exists("whisper", "--help"),
+    exists(bin("ffmpeg"), "-version"),
+    exists(bin("ffprobe"), "-version"),
+    exists(bin("ytdlp"), "--version"),
+    exists(bin("whisper"), "--help"),
   ]);
   cached = { ffmpeg, ffprobe, ytdlp, whisper };
   return cached;

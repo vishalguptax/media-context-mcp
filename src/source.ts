@@ -2,6 +2,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { run } from "./exec.js";
 import { checkDeps, installHint } from "./deps.js";
+import { bin } from "./bins.js";
 
 export interface ResolvedSource {
   /** Absolute path to a local video file ready for ffmpeg. */
@@ -62,7 +63,7 @@ export async function resolveSource(
   }
   args.push("-o", outTemplate, trimmed);
 
-  const res = await run("yt-dlp", args, { timeoutMs: 10 * 60 * 1000 });
+  const res = await run(bin("ytdlp"), args, { timeoutMs: 10 * 60 * 1000 });
   if (res.code !== 0) {
     throw new Error(`yt-dlp failed (${res.code}): ${res.stderr.slice(-600).trim()}`);
   }
