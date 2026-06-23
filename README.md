@@ -12,33 +12,43 @@
   Give your AI assistant eyes and ears — analyze any <b>video, audio, or image</b>, entirely on your machine.
 </p>
 
+<p align="center">
+  <a href="#-install">Install</a> ·
+  <a href="#-examples">Examples</a> ·
+  <a href="#-tools">Tools</a> ·
+  <a href="./docs/usage.md">Usage guide</a> ·
+  <a href="https://www.npmjs.com/package/media-context-mcp">npm</a> ·
+  <a href="https://lobehub.com/mcp/vishalguptax-media-context-mcp">LobeHub</a>
+</p>
+
 ---
 
-Your assistant can read text and look at a picture, but it can't watch a video or listen to audio. **media-context-mcp** fills that gap. Point it at a file or a URL and it hands back clean, model-ready context — sampled frames, a transcript, or the text on screen — without sending anything to the cloud.
+Your assistant can read text and look at a picture, but it can't watch a video or listen to audio. **media-context-mcp** fills that gap: point it at a file or a URL and it hands back clean, model-ready context — sampled frames, a transcript, or the text on screen — without sending anything to the cloud.
 
-## Features
+```bash
+# 1. add it to your client (Claude Code shown — see Install for others)
+claude mcp add media-context -- npx -y media-context-mcp
+# 2. install the media tools it uses
+npx media-context-mcp setup
+```
 
-- **Any source** — video, audio, or images; a local file or a URL (YouTube, Vimeo, direct links, and 1000+ more).
+Then just ask: *“Summarize `demo.mp4`.”*
+
+## ✨ Features
+
+- **Any source** — video, audio, or images; a local file or a URL (YouTube, Vimeo, and 1000+ more).
 - **See video** — a quick montage overview, full-resolution stills, scene-change shots, or a dense filmstrip that catches glitches lasting a fraction of a second.
 - **Hear audio** — turn speech in a clip, voice note, or podcast into text.
 - **Read screens** — pull the exact text off a UI, an error dialog, or a screenshot.
-- **Cheap by design** — frames are tiled and downscaled, so a long clip costs a couple of images instead of hundreds.
-- **Private & local** — everything runs on your machine. No API keys, no uploads.
+- **Cheap by design** — frames are tiled and downscaled, so a long clip costs a couple of images, not hundreds.
+- **Private & local** — runs on your machine. No API keys, no uploads.
 - **Works everywhere** — any MCP client: Claude, Cursor, VS Code, and more.
 
-## Use cases
+## 🚀 Install
 
-- **Give an LLM video context** — turn a clip into frames and text your model can reason over.
-- **Analyze a screen recording** — read the on-screen error, walk a UI flow, or debug a bug video from QA.
-- **Summarize a YouTube video** — paste a link, get the gist plus a transcript.
-- **Transcribe audio** — meetings, standups, voice notes, podcasts → text, locally.
-- **Extract text from a screenshot** — pull an exact error, stack trace, or table out of an image.
-- **Extract frames from a video** — sampled stills for the model to read.
-- **Catch UI glitches** — frame-by-frame, including flickers shorter than a second.
+### 1. Add the server to your client
 
-## Install
-
-**1. Add it to your MCP client.** The launch command is always `npx -y media-context-mcp`.
+The launch command is always `npx -y media-context-mcp`.
 
 <details open>
 <summary><b>Claude Code</b></summary>
@@ -46,21 +56,24 @@ Your assistant can read text and look at a picture, but it can't watch a video o
 ```bash
 claude mcp add media-context -- npx -y media-context-mcp
 ```
+
+Or install it as a plugin (one command, bundles the server):
+
+```
+/plugin marketplace add vishalguptax/media-context-mcp
+/plugin install media-context
+```
 </details>
 
 <details>
 <summary><b>Claude Desktop</b></summary>
 
-Settings → Developer → Edit Config (`claude_desktop_config.json`). The `env` block is optional — only needed if the transcription / text-recognition tools aren't on your `PATH`:
+Settings → Developer → Edit Config (`claude_desktop_config.json`):
 
 ```json
 {
   "mcpServers": {
-    "media-context": {
-      "command": "npx",
-      "args": ["-y", "media-context-mcp"],
-      "env": { "WHISPER_BIN": "/path/to/whisper", "TESSERACT_BIN": "/path/to/tesseract" }
-    }
+    "media-context": { "command": "npx", "args": ["-y", "media-context-mcp"] }
   }
 }
 ```
@@ -106,19 +119,23 @@ args = ["-y", "media-context-mcp"]
 ```
 </details>
 
-**2. Run setup** — one command installs what the server needs via your OS package manager:
+> **Global vs per-project** — install once for all projects, or commit a project-scoped config so your team shares it: `claude mcp add … --scope project` (writes `.mcp.json`), or a `.cursor/mcp.json` / `.vscode/mcp.json` in the repo.
+
+### 2. Install the media tools
+
+One command installs what the server uses, via your OS package manager:
 
 ```bash
-npx media-context-mcp setup          # everything for files + URLs + text
+npx media-context-mcp setup          # ffmpeg, URL download, on-screen text
 npx media-context-mcp setup --audio  # also enable transcription
 ```
 
-`check_media_deps` shows what's ready at any time, and `npx media-context-mcp setup --uninstall` removes the tools again. Prefer to install by hand?
+The server then **finds the tools automatically** — including common off-`PATH` spots (Tesseract in Program Files, Whisper in a Python Scripts folder), so transcripts and OCR work without extra config. `check_media_deps` shows what's ready; `setup --uninstall` removes the tools again.
 
 <details>
-<summary>Manual dependencies</summary>
+<summary>Install by hand / point at a custom path</summary>
 
-The package ships no binaries — it drives tools on your machine. Only `ffmpeg` is required; the rest are optional, one feature each.
+The package ships no binaries. Only `ffmpeg` is required; the rest are optional, one feature each.
 
 | Tool | For | Install |
 |------|-----|---------|
@@ -126,21 +143,23 @@ The package ships no binaries — it drives tools on your machine. Only `ffmpeg`
 | `yt-dlp` | URLs | `winget install yt-dlp.yt-dlp` · `brew install yt-dlp` · `pip install -U yt-dlp` |
 | `tesseract` | on-screen text | `winget install UB-Mannheim.TesseractOCR` · `brew install tesseract` · `apt install tesseract-ocr` |
 | `whisper` | transcription | `pip install -U openai-whisper` |
+
+If a tool lives somewhere unusual, point at it with `FFMPEG_BIN` / `YTDLP_BIN` / `WHISPER_BIN` / `TESSERACT_BIN` (env vars, e.g. in your client's config `env` block).
 </details>
 
-## Examples
+## 💬 Examples
 
 Just ask your assistant in plain language — it picks the right options for you.
 
-- “Summarize `demo.mp4`.” — a quick overview from sampled frames.
-- “What error does the app show at the end of `bug.mp4`?” — reads the on-screen text.
-- “Transcribe `standup.m4a` and list the action items.” — speech to text.
-- “Summarize `https://youtu.be/VIDEO_ID` and include the transcript.” — fetches and transcribes.
-- “In `slider.mp4`, find the frame where the slider flickers around 0:06.” — scans a dense burst of frames to catch a sub-second glitch.
+- *“Summarize `demo.mp4`.”* — a quick overview from sampled frames.
+- *“What error does the app show at the end of `bug.mp4`?”* — reads the on-screen text.
+- *“Transcribe `standup.m4a` and list the action items.”* — speech to text.
+- *“Summarize `https://youtu.be/VIDEO_ID` and include the transcript.”* — fetches and transcribes.
+- *“In `slider.mp4`, find the frame where the slider flickers around 0:06.”* — catches a sub-second glitch.
 
-Want finer control — modes, cropping, language, sampling rate? It's all in the **[usage guide](./docs/usage.md)**.
+Finer control — modes, cropping, language, sampling rate — is in the **[usage guide](./docs/usage.md)**.
 
-## Tools
+## 🧰 Tools
 
 The server exposes two tools, which your assistant calls automatically.
 
@@ -151,11 +170,11 @@ The server exposes two tools, which your assistant calls automatically.
 
 Everything runs locally, and each call cleans up its temporary files when it returns.
 
-## FAQ
+## ❓ FAQ
 
-**Can Claude (or any LLM) watch a video?** Not directly — models take images and text, not video. This server extracts frames and audio transcripts so your assistant can analyze the video.
+**Can Claude (or any LLM) watch a video?** Not directly — models take images and text, not video. This server extracts frames and transcripts so your assistant can analyze it.
 
-**How do I give Claude Code, Cursor, or VS Code video context?** Add the server (see [Install](#install)), then ask in plain language — it works in any MCP client.
+**How do I give Claude Code, Cursor, or VS Code video context?** Add the server (see [Install](#-install)), then ask in plain language — it works in any MCP client.
 
 **Can it convert video or audio to text?** Yes — it samples frames for the model to read and transcribes speech locally.
 
@@ -165,7 +184,7 @@ Everything runs locally, and each call cleans up its temporary files when it ret
 
 **Is it free?** Yes, open source under Apache-2.0.
 
-## Development
+## 🛠️ Development
 
 ```bash
 npm install
@@ -175,6 +194,6 @@ npm test
 
 Tests cover the pipeline end-to-end; the integration ones skip themselves when the optional tools aren't installed. Issues and PRs welcome.
 
-## License
+## 📄 License
 
-[Apache-2.0](./LICENSE) © Vishal Gupta. Free and open — use it however you like.
+[Apache-2.0](./LICENSE) © Vishal Gupta — free and open, use it however you like.
