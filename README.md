@@ -8,59 +8,76 @@
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue.svg" alt="license"></a>
 </p>
 
-Your coding agent can't watch a screen recording, sit through a voice note, or reliably read the tiny text in a busy screenshot. **media-context-mcp** does that part for it — it pulls frames, transcribes speech, and OCRs on-screen text, then hands back compact, low-token context.
-
-Everything runs locally with `ffmpeg`, `yt-dlp`, Whisper, and Tesseract. No API keys, no uploads.
+Your AI assistant can't watch a video or listen to audio. **media-context-mcp** turns any video, audio, or image — a file or a URL — into compact, model-readable context: frames, transcripts, and on-screen text. Everything runs locally. No API keys, no uploads.
 
 ## Install
 
-**1. Add the server to your client** (Claude Code shown; every other client uses the same `npx -y media-context-mcp` command — see the **[installation guide](./docs/installation.md)**):
+**1. Add it to your MCP client.** The launch command is always `npx -y media-context-mcp`:
 
-```bash
-claude mcp add media-context -- npx -y media-context-mcp
+```json
+{
+  "mcpServers": {
+    "media-context": { "command": "npx", "args": ["-y", "media-context-mcp"] }
+  }
+}
 ```
 
-**2. Install the media tools it drives.** One command, via your OS package manager (winget / brew / apt):
+Claude Code, Cursor, VS Code, Claude Desktop, Codex, Windsurf, Cline — exact config per client in the **[installation guide](./docs/installation.md)**.
+
+**2. Install the media tools** (one command, uses your OS package manager):
 
 ```bash
-npx media-context-mcp setup            # ffmpeg + yt-dlp + tesseract
-npx media-context-mcp setup --whisper  # also audio transcription (large — pulls PyTorch)
+npx media-context-mcp setup            # ffmpeg, yt-dlp, tesseract
+npx media-context-mcp setup --whisper  # add audio transcription
 ```
 
-The npm package itself is tiny — `setup` pulls in the binaries so nothing is bundled. Prefer to install by hand? Only `ffmpeg` is strictly required:
-
-| Tool | Unlocks | |
-|------|---------|--|
-| `ffmpeg` + `ffprobe` | frames, scenes — everything | **required** |
-| `yt-dlp` | URL sources (YouTube, Vimeo, …) | optional |
-| `tesseract` | OCR of on-screen text | optional |
-| `whisper` | audio transcripts | optional |
-
-Ask for a feature whose tool is missing and the server tells you the exact command. Run the `check_media_deps` tool to see what's detected — full commands in the [installation guide](./docs/installation.md#dependencies).
+That's it. (`check_media_deps` shows what's detected; manual install commands are in the [guide](./docs/installation.md#dependencies).)
 
 ## Examples
 
-You talk to your agent in plain language; it picks the options. Here's what runs underneath — and why.
+You just talk to your agent — it reads the tool description and picks the options. Each example shows the **prompt you type** and the call it produces.
 
-**Summarize a recording.** The default samples the whole clip into one or two montage images — cheapest possible overview.
+**Summarize a recording**
+
+> “What happens in `demo.mp4`?”
 
 ```json
 { "source": "demo.mp4" }
 ```
 
-**Read the exact error in a screen recording.** `detail: high` switches to full-size stills; `ocr` returns the text verbatim, so the model quotes the real error string instead of guessing from blurry pixels.
+The default samples the whole clip into one or two montage images — the cheapest overview.
+
+**Read the exact error in a screen recording**
+
+> “The app throws an error in `bug.mp4` around the end — what does it say?”
 
 ```json
 { "source": "bug.mp4", "detail": "high", "ocr": true }
 ```
 
-**Transcribe a voice note or podcast.** Audio is detected automatically — you get the transcript, no images.
+`detail: high` switches to full-size stills; `ocr` returns the text verbatim, so the model quotes the real error string instead of guessing from blurry pixels.
+
+**Transcribe a voice note or podcast**
+
+> “Transcribe `standup.m4a` and list the action items.”
 
 ```json
 { "source": "standup.m4a" }
 ```
 
-**Find a sub-second UI glitch.** `filmstrip` stacks a dense burst of frames, cropped to the control, into one strip — so a 100 ms flicker shows up as a frame that disagrees with its neighbours.
+Audio is detected automatically — you get the transcript, no images.
+
+**Analyze a YouTube link**
+
+> “Summarize `https://youtu.be/VIDEO_ID` and give me the transcript.”
+
+```json
+{ "source": "https://youtu.be/VIDEO_ID", "transcript": true }
+```
+
+**Find a sub-second UI glitch**
+
+> “There's a slider in `slider.mp4` that flickers to the wrong value for a split second around 0:06 — find the frame.”
 
 ```json
 { "source": "slider.mp4", "mode": "filmstrip",
@@ -68,7 +85,9 @@ You talk to your agent in plain language; it picks the options. Here's what runs
   "crop": { "x": 0, "y": 1730, "width": 1080, "height": 360 } }
 ```
 
-More recipes and the full option reference are in the **[usage guide](./docs/usage.md)**.
+`filmstrip` stacks a dense burst of cropped frames into one strip — so a 100 ms flicker shows up as a frame that disagrees with its neighbours.
+
+More recipes, prompts, and the full option reference are in the **[usage guide](./docs/usage.md)**.
 
 ## Use it as a library
 
