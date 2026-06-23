@@ -3,6 +3,15 @@
   "version": "0.1.0",
   "description": "100% local, zero-API MCP server that turns a video, audio, or image file/URL into low-token context for AI agents — montage frames, scene detection, speech transcript (Whisper), and on-screen OCR (Tesseract). No cloud upload, no keys.",
   "type": "module",
+  "author": "Vishal Gupta (https://github.com/vishalguptax)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vishalguptax/media-context-mcp.git"
+  },
+  "homepage": "https://github.com/vishalguptax/media-context-mcp#readme",
+  "bugs": {
+    "url": "https://github.com/vishalguptax/media-context-mcp/issues"
+  },
   "bin": {
     "media-context-mcp": "dist/index.js"
   },
@@ -54,7 +63,7 @@
     "ai",
     "frames"
   ],
-  "license": "MIT",
+  "license": "Apache-2.0",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.0",
     "zod": "^3.23.8"

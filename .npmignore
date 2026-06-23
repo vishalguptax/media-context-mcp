@@ -2,6 +2,10 @@ src/
 plugin/
 .claude-plugin/
 tests/
+examples/
+out/
+assets/
+.github/
 tsconfig.json
 vitest.config.ts
 *.tsbuildinfo

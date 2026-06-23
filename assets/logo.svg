@@ -1,0 +1,40 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="media-context-mcp logo">
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="256" y2="256" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#13B7A4"/>
+      <stop offset="1" stop-color="#0B7F71"/>
+    </linearGradient>
+    <radialGradient id="lens" cx="0.5" cy="0.42" r="0.65">
+      <stop offset="0" stop-color="#0E9486"/>
+      <stop offset="1" stop-color="#0A5F55"/>
+    </radialGradient>
+  </defs>
+
+  <!-- app tile -->
+  <rect x="8" y="8" width="240" height="240" rx="56" fill="url(#tile)"/>
+
+  <!-- filmstrip -->
+  <rect x="80" y="22" width="96" height="212" rx="18" fill="#FFFFFF"/>
+  <!-- sprocket holes -->
+  <g fill="#0B7F71">
+    <rect x="90" y="34"  width="14" height="14" rx="4"/>
+    <rect x="152" y="34" width="14" height="14" rx="4"/>
+    <rect x="90" y="64"  width="14" height="14" rx="4"/>
+    <rect x="152" y="64" width="14" height="14" rx="4"/>
+    <rect x="90" y="178" width="14" height="14" rx="4"/>
+    <rect x="152" y="178" width="14" height="14" rx="4"/>
+    <rect x="90" y="208" width="14" height="14" rx="4"/>
+    <rect x="152" y="208" width="14" height="14" rx="4"/>
+  </g>
+  <!-- frame dividers -->
+  <g stroke="#D8F1EC" stroke-width="3">
+    <line x1="80" y1="92"  x2="176" y2="92"/>
+    <line x1="80" y1="164" x2="176" y2="164"/>
+  </g>
+
+  <!-- lens / eye in the centre frame -->
+  <circle cx="128" cy="128" r="34" fill="url(#lens)"/>
+  <circle cx="128" cy="128" r="34" fill="none" stroke="#0B7F71" stroke-width="3"/>
+  <circle cx="128" cy="128" r="13" fill="#073F39"/>
+  <circle cx="119" cy="119" r="5" fill="#EAFBF7"/>
+</svg>

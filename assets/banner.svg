@@ -1,0 +1,54 @@
+<svg width="1200" height="320" viewBox="0 0 1200 320" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="media-context-mcp">
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="220" y2="220" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#13B7A4"/>
+      <stop offset="1" stop-color="#0B7F71"/>
+    </linearGradient>
+    <radialGradient id="lens" cx="0.5" cy="0.42" r="0.65">
+      <stop offset="0" stop-color="#0E9486"/>
+      <stop offset="1" stop-color="#0A5F55"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1200" height="320" rx="28" fill="#0B1220"/>
+
+  <!-- icon -->
+  <g transform="translate(80,52)">
+    <rect x="0" y="0" width="216" height="216" rx="48" fill="url(#tile)"/>
+    <rect x="64" y="14" width="88" height="188" rx="16" fill="#FFFFFF"/>
+    <g fill="#0B7F71">
+      <rect x="73" y="26"  width="12" height="12" rx="3"/>
+      <rect x="131" y="26" width="12" height="12" rx="3"/>
+      <rect x="73" y="52"  width="12" height="12" rx="3"/>
+      <rect x="131" y="52" width="12" height="12" rx="3"/>
+      <rect x="73" y="152" width="12" height="12" rx="3"/>
+      <rect x="131" y="152" width="12" height="12" rx="3"/>
+      <rect x="73" y="178" width="12" height="12" rx="3"/>
+      <rect x="131" y="178" width="12" height="12" rx="3"/>
+    </g>
+    <g stroke="#D8F1EC" stroke-width="2.5">
+      <line x1="64" y1="76"  x2="152" y2="76"/>
+      <line x1="64" y1="140" x2="152" y2="140"/>
+    </g>
+    <circle cx="108" cy="108" r="30" fill="url(#lens)"/>
+    <circle cx="108" cy="108" r="30" fill="none" stroke="#0B7F71" stroke-width="3"/>
+    <circle cx="108" cy="108" r="11" fill="#073F39"/>
+    <circle cx="100" cy="100" r="4.5" fill="#EAFBF7"/>
+  </g>
+
+  <!-- wordmark -->
+  <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+    <text x="360" y="150" font-size="64" font-weight="700" fill="#FFFFFF">media-context<tspan fill="#13B7A4">-mcp</tspan></text>
+    <text x="362" y="196" font-size="27" font-weight="500" fill="#9FB3C8">See &amp; hear your media — 100% local context for AI agents.</text>
+    <g transform="translate(362,228)" font-size="20" font-weight="600">
+      <rect x="0" y="0" width="150" height="36" rx="18" fill="#13241F"/>
+      <text x="22" y="24" fill="#3FE0C9">video</text>
+      <rect x="162" y="0" width="150" height="36" rx="18" fill="#13241F"/>
+      <text x="184" y="24" fill="#3FE0C9">audio</text>
+      <rect x="324" y="0" width="150" height="36" rx="18" fill="#13241F"/>
+      <text x="346" y="24" fill="#3FE0C9">image</text>
+      <rect x="486" y="0" width="120" height="36" rx="18" fill="#13241F"/>
+      <text x="508" y="24" fill="#3FE0C9">OCR</text>
+    </g>
+  </g>
+</svg>
