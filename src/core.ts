@@ -138,7 +138,29 @@ export async function analyzeVideo(options: AnalyzeOptions): Promise<AnalyzeResu
         warnings.push(`OCR skipped — tesseract isn't installed. ${installHint("tesseract")}`);
       } else {
         try {
-          const text = await ocrImages(shownPaths, o.ocrLang);
+          // OCR reads its own full-resolution stills, not the token-cheap display
+          // images, and always as individual frames (never montage tiles).
+          const ocrFramesDir = await workspace.sub("ocr-frames");
+          const ocrScale = Math.min(info.width || 1280, 1920);
+          const ocrFrames = await extract({
+            filePath: resolved.filePath,
+            outDir: ocrFramesDir,
+            mode: "frames",
+            format: "png",
+            scale: ocrScale,
+            maxFrames: o.ocrMaxFrames,
+            grid: o.grid,
+            sceneThreshold: o.sceneThreshold,
+            startSec: o.startSec,
+            endSec: o.endSec,
+            durationSec: info.durationSec,
+          });
+          const preDir = await workspace.sub("ocr-pre");
+          const text = await ocrImages(ocrFrames.images, {
+            lang: o.ocrLang,
+            psm: o.ocrPsm,
+            workDir: preDir,
+          });
           if (!text) {
             warnings.push("OCR found no readable text on these frames.");
           } else {

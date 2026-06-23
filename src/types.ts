@@ -84,6 +84,8 @@ export interface AnalyzeOptions {
   whisperModel?: string;
   ocr?: boolean;
   ocrLang?: string;
+  ocrPsm?: number;
+  ocrMaxFrames?: number;
   maxDurationSec?: number;
   maxFileSizeMb?: number;
 }

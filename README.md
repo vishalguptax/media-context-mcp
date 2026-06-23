@@ -77,6 +77,8 @@ claude mcp add video-context -- npx -y video-context-mcp
 | `whisperModel` | `small` | `tiny` \| `base` \| `small` \| `medium` \| `large`. |
 | `ocr` | `false` | Extract on-screen text via Tesseract — ideal for app recordings. Implies `detail:high`. |
 | `ocrLang` | `eng` | Tesseract language code(s), e.g. `eng+deu`. |
+| `ocrPsm` | `3` | Page-segmentation mode. `3` auto, `6` uniform block, `11` sparse/scattered UI labels. |
+| `ocrMaxFrames` | `12` | Frames to OCR, sampled at full resolution independently of the display images. |
 | `maxDurationSec` | `3600` | Reject URL downloads longer than this. |
 | `maxFileSizeMb` | `500` | Abort a URL download past this size. |
 
@@ -94,6 +96,11 @@ Screen recordings are text-heavy and detail-critical, so the token-cheap montage
 `detail:high` gives readable full-size stills; `ocr:true` pulls exact on-screen
 text (menus, errors, code) as cheap, accurate text instead of making the model
 squint at pixels.
+
+OCR runs on its **own full-resolution frames** (sampled separately from the
+display images, then upscaled-if-small and sharpened), so you can keep `scale`
+low for cheap images and still get accurate text. Tune `ocrPsm` if a layout
+reads poorly — `6` for a solid block of text, `11` for scattered labels.
 
 ### `check_video_deps`
 

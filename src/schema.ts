@@ -75,6 +75,20 @@ export const ANALYZE_SHAPE = {
     .string()
     .default("eng")
     .describe("Tesseract language code(s) for OCR, e.g. 'eng' or 'eng+deu'."),
+  ocrPsm: z
+    .number()
+    .int()
+    .min(0)
+    .max(13)
+    .default(3)
+    .describe("Tesseract page-segmentation mode. 3 = auto (default), 6 = uniform block, 11 = sparse/scattered UI labels."),
+  ocrMaxFrames: z
+    .number()
+    .int()
+    .min(1)
+    .max(60)
+    .default(12)
+    .describe("Frames to OCR (sampled at full resolution, independent of the display images)."),
   maxDurationSec: z
     .number()
     .min(1)
