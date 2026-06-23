@@ -12,7 +12,38 @@ Your AI assistant can't watch a video or listen to audio. **media-context-mcp** 
 
 ## Install
 
-**1. Add it to your MCP client.** The launch command is always `npx -y media-context-mcp`:
+**1. Add it to your MCP client.** The launch command is always `npx -y media-context-mcp`.
+
+<details open>
+<summary><b>Claude Code</b></summary>
+
+```bash
+claude mcp add media-context -- npx -y media-context-mcp
+```
+</details>
+
+<details>
+<summary><b>Claude Desktop</b></summary>
+
+Settings → Developer → Edit Config (`claude_desktop_config.json`). The `env` block is optional — only needed if Whisper/Tesseract aren't on your `PATH`:
+
+```json
+{
+  "mcpServers": {
+    "media-context": {
+      "command": "npx",
+      "args": ["-y", "media-context-mcp"],
+      "env": { "WHISPER_BIN": "/path/to/whisper", "TESSERACT_BIN": "/path/to/tesseract" }
+    }
+  }
+}
+```
+</details>
+
+<details>
+<summary><b>Cursor</b> · <b>Windsurf</b> · <b>Cline</b> · other clients</summary>
+
+Add to the client's MCP config (`~/.cursor/mcp.json`, `~/.codeium/windsurf/mcp_config.json`, Cline settings, …):
 
 ```json
 {
@@ -21,8 +52,33 @@ Your AI assistant can't watch a video or listen to audio. **media-context-mcp** 
   }
 }
 ```
+</details>
 
-Claude Code, Cursor, VS Code, Claude Desktop, Codex, Windsurf, Cline — exact config per client in the **[installation guide](./docs/installation.md)**.
+<details>
+<summary><b>VS Code (GitHub Copilot, agent mode)</b></summary>
+
+Create `.vscode/mcp.json` — VS Code uses the `servers` key:
+
+```json
+{
+  "servers": {
+    "media-context": { "command": "npx", "args": ["-y", "media-context-mcp"] }
+  }
+}
+```
+</details>
+
+<details>
+<summary><b>Codex CLI</b></summary>
+
+`~/.codex/config.toml`:
+
+```toml
+[mcp_servers.media-context]
+command = "npx"
+args = ["-y", "media-context-mcp"]
+```
+</details>
 
 **2. Install the media tools** (one command, uses your OS package manager):
 
@@ -31,7 +87,7 @@ npx media-context-mcp setup            # ffmpeg, yt-dlp, tesseract
 npx media-context-mcp setup --whisper  # add audio transcription
 ```
 
-That's it. (`check_media_deps` shows what's detected; manual install commands are in the [guide](./docs/installation.md#dependencies).)
+Only `ffmpeg` is required; the rest are optional and unlock one feature each. `check_media_deps` shows what's detected. To install by hand: `ffmpeg`/`ffprobe`, `yt-dlp` (URLs), `tesseract` (OCR), `whisper` (transcripts) — via `winget` / `brew` / `apt` / `pip`.
 
 ## Examples
 
