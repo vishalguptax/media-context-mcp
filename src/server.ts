@@ -7,7 +7,7 @@ type Content =
   | { type: "text"; text: string }
   | { type: "image"; data: string; mimeType: string };
 
-const VERSION = "0.1.1";
+const VERSION = "0.1.2";
 
 /** Build the MCP server with both media tools registered. */
 export function createServer(): McpServer {

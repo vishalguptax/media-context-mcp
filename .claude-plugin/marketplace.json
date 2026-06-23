@@ -3,7 +3,7 @@
   "owner": { "name": "media-context-mcp" },
   "metadata": {
     "description": "Local media understanding for Claude — analyze a video, audio, or image file/URL as low-token context.",
-    "version": "0.1.1"
+    "version": "0.1.2"
   },
   "plugins": [
     {
