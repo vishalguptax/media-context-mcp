@@ -27,7 +27,7 @@ export function isUrl(source: string): boolean {
 export async function resolveSource(
   source: string,
   downloadDir: string,
-  opts: { maxDurationSec?: number } = {}
+  opts: { maxDurationSec?: number; maxFileSizeMb?: number } = {}
 ): Promise<ResolvedSource> {
   const trimmed = source.trim();
   if (!trimmed) throw new Error("source is empty");
@@ -59,7 +59,12 @@ export async function resolveSource(
     "mp4",
   ];
   if (opts.maxDurationSec && opts.maxDurationSec > 0) {
-    args.push("--match-filter", `duration<=${opts.maxDurationSec}`);
+    // `<=?` lets clips with unknown duration (e.g. direct .mp4 links that
+    // expose no metadata) pass instead of being silently skipped.
+    args.push("--match-filter", `duration<=?${opts.maxDurationSec}`);
+  }
+  if (opts.maxFileSizeMb && opts.maxFileSizeMb > 0) {
+    args.push("--max-filesize", `${opts.maxFileSizeMb}M`);
   }
   args.push("-o", outTemplate, trimmed);
 

@@ -109,6 +109,12 @@ server.registerTool(
         .max(36000)
         .default(3600)
         .describe("Reject URL downloads longer than this many seconds."),
+      maxFileSizeMb: z
+        .number()
+        .min(1)
+        .max(8192)
+        .default(500)
+        .describe("Abort a URL download once it exceeds this size in MB."),
     },
   },
   async (args) => {
@@ -132,6 +138,7 @@ server.registerTool(
       const downloadDir = await workspace.sub("download");
       const resolved = await resolveSource(args.source, downloadDir, {
         maxDurationSec: args.maxDurationSec,
+        maxFileSizeMb: args.maxFileSizeMb,
       });
       const info = await probe(resolved.filePath);
 
