@@ -8,7 +8,23 @@
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue.svg" alt="license"></a>
 </p>
 
-Your AI assistant can't watch a video or listen to audio. **media-context-mcp** turns any video, audio, or image — a file or a URL — into compact, model-readable context: frames, transcripts, and on-screen text. Everything runs locally. No API keys, no uploads.
+<p align="center">
+  Give your AI assistant eyes and ears — analyze any <b>video, audio, or image</b>, entirely on your machine.
+</p>
+
+---
+
+Your assistant can read text and look at a picture, but it can't watch a video or listen to audio. **media-context-mcp** fills that gap. Point it at a file or a URL and it hands back clean, model-ready context — sampled frames, a transcript, or the text on screen — without sending anything to the cloud.
+
+## Features
+
+- **Any source** — video, audio, or images; a local file or a URL (YouTube, Vimeo, direct links, and 1000+ more).
+- **See video** — a quick montage overview, full-resolution stills, scene-change shots, or a dense filmstrip that catches glitches lasting a fraction of a second.
+- **Hear audio** — turn speech in a clip, voice note, or podcast into text.
+- **Read screens** — pull the exact text off a UI, an error dialog, or a screenshot.
+- **Cheap by design** — frames are tiled and downscaled, so a long clip costs a couple of images instead of hundreds.
+- **Private & local** — everything runs on your machine. No API keys, no uploads.
+- **Works everywhere** — any MCP client: Claude, Cursor, VS Code, and more.
 
 ## Install
 
@@ -25,7 +41,7 @@ claude mcp add media-context -- npx -y media-context-mcp
 <details>
 <summary><b>Claude Desktop</b></summary>
 
-Settings → Developer → Edit Config (`claude_desktop_config.json`). The `env` block is optional — only needed if Whisper/Tesseract aren't on your `PATH`:
+Settings → Developer → Edit Config (`claude_desktop_config.json`). The `env` block is optional — only needed if the transcription / text-recognition tools aren't on your `PATH`:
 
 ```json
 {
@@ -112,11 +128,11 @@ Just ask your assistant in plain language — it picks the right options for you
 - “Summarize `https://youtu.be/VIDEO_ID` and include the transcript.” — fetches and transcribes.
 - “In `slider.mp4`, find the frame where the slider flickers around 0:06.” — scans a dense burst of frames to catch a sub-second glitch.
 
-Want finer control — modes, cropping, OCR language, sampling rate? It's all in the **[usage guide](./docs/usage.md)**.
+Want finer control — modes, cropping, language, sampling rate? It's all in the **[usage guide](./docs/usage.md)**.
 
 ## Tools
 
-The server exposes two tools, which your assistant calls automatically:
+The server exposes two tools, which your assistant calls automatically.
 
 | Tool | What it does |
 |------|--------------|
@@ -133,12 +149,8 @@ npm run build
 npm test
 ```
 
-Tests cover the pipeline end-to-end; the ffmpeg/tesseract integration ones skip themselves if the binaries aren't installed. Issues and PRs welcome.
-
-## Open-core
-
-The engine in this repo is free and open — no caps on duration, resolution, or features. Anything paid in the future (a hosted/team service, batch CI analysis, automated glitch detection) would be a separate product on top; it won't paywall what's here.
+Tests cover the pipeline end-to-end; the integration ones skip themselves when the optional tools aren't installed. Issues and PRs welcome.
 
 ## License
 
-[Apache-2.0](./LICENSE) © Vishal Gupta
+[Apache-2.0](./LICENSE) © Vishal Gupta. Free and open — use it however you like.

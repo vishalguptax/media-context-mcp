@@ -5,14 +5,27 @@ type Platform = "win32" | "darwin" | "linux";
 
 interface Tool {
   key: "ffmpeg" | "ytdlp" | "tesseract" | "whisper";
-  label: string;
+  name: string;
+  desc: string;
   /** Install command per platform: [binary, ...args]. */
   cmd: Partial<Record<Platform, string[]>>;
-  /** Shown when no automated command fits the platform. */
+  /** Shown when no automated command fits the platform / install fails. */
   manual: string;
-  /** Only installed when --whisper is passed (large / needs Python). */
+  /** Only installed when --audio is passed (large / needs Python). */
   optIn?: boolean;
 }
+
+// ---- tiny color helper (no deps, degrades on non-TTY / NO_COLOR) ----
+const COLOR = process.stdout.isTTY && !process.env.NO_COLOR;
+const sgr = (s: string, ...codes: number[]) =>
+  COLOR ? `\x1b[${codes.join(";")}m${s}\x1b[0m` : s;
+const teal = (s: string) => sgr(s, 38, 5, 37);
+const green = (s: string) => sgr(s, 38, 5, 42);
+const red = (s: string) => sgr(s, 38, 5, 203);
+const yellow = (s: string) => sgr(s, 38, 5, 221);
+const dim = (s: string) => sgr(s, 2);
+const bold = (s: string) => sgr(s, 1);
+const out = (s = "") => process.stdout.write(s + "\n");
 
 const WINGET = (id: string): string[] => [
   "winget",
@@ -27,7 +40,8 @@ const WINGET = (id: string): string[] => [
 const TOOLS: Tool[] = [
   {
     key: "ffmpeg",
-    label: "ffmpeg (+ ffprobe) — required for all media",
+    name: "ffmpeg",
+    desc: "core media engine",
     cmd: {
       win32: WINGET("Gyan.FFmpeg"),
       darwin: ["brew", "install", "ffmpeg"],
@@ -37,7 +51,8 @@ const TOOLS: Tool[] = [
   },
   {
     key: "ytdlp",
-    label: "yt-dlp — analyze URLs (YouTube, Vimeo, …)",
+    name: "yt-dlp",
+    desc: "download from URLs",
     cmd: {
       win32: WINGET("yt-dlp.yt-dlp"),
       darwin: ["brew", "install", "yt-dlp"],
@@ -47,7 +62,8 @@ const TOOLS: Tool[] = [
   },
   {
     key: "tesseract",
-    label: "tesseract — OCR of on-screen text",
+    name: "tesseract",
+    desc: "on-screen text (OCR)",
     cmd: {
       win32: WINGET("UB-Mannheim.TesseractOCR"),
       darwin: ["brew", "install", "tesseract"],
@@ -57,7 +73,8 @@ const TOOLS: Tool[] = [
   },
   {
     key: "whisper",
-    label: "whisper — audio transcripts (large: pulls PyTorch, needs Python)",
+    name: "whisper",
+    desc: "audio transcription (large)",
     cmd: {
       win32: ["pip", "install", "-U", "openai-whisper"],
       darwin: ["pip3", "install", "-U", "openai-whisper"],
@@ -68,6 +85,10 @@ const TOOLS: Tool[] = [
   },
 ];
 
+function row(glyph: string, tool: Tool, note = ""): void {
+  out(`  ${glyph} ${bold(tool.name.padEnd(11))}${dim(tool.desc)}${note ? "  " + dim(note) : ""}`);
+}
+
 function spawnInherit(bin: string, args: string[]): Promise<number> {
   return new Promise((resolve) => {
     const child = spawn(bin, args, { stdio: "inherit", windowsHide: true });
@@ -76,14 +97,16 @@ function spawnInherit(bin: string, args: string[]): Promise<number> {
   });
 }
 
-/** Install the external binaries media-context-mcp can use, via the OS package manager. */
+/** Install the external tools media-context-mcp drives, via the OS package manager. */
 export async function runSetup(argv: string[]): Promise<number> {
   const platform = process.platform as Platform;
-  const wantWhisper =
+  const wantAudio =
     argv.includes("--audio") || argv.includes("--whisper") || argv.includes("--all");
 
-  process.stdout.write("media-context-mcp setup\n");
-  process.stdout.write(`Platform: ${platform}\n\n`);
+  out();
+  out(`  ${teal("◆")} ${bold("media-context")} ${dim("setup")}`);
+  out(`  ${dim("Installing the tools the server uses — only what's missing.")}`);
+  out();
 
   const deps = await checkDeps();
   const present: Record<string, boolean> = {
@@ -93,36 +116,44 @@ export async function runSetup(argv: string[]): Promise<number> {
     whisper: deps.whisper,
   };
 
-  const failures: string[] = [];
+  const failures: Tool[] = [];
 
   for (const tool of TOOLS) {
-    if (tool.optIn && !wantWhisper) {
-      process.stdout.write(`skip  ${tool.label}\n      (pass --audio to include it)\n`);
+    if (tool.optIn && !wantAudio) {
+      row(dim("○"), tool, "skipped — pass --audio");
       continue;
     }
     if (present[tool.key]) {
-      process.stdout.write(`ok    ${tool.label} — already installed\n`);
+      row(green("✓"), tool, "ready");
       continue;
     }
     const cmd = tool.cmd[platform];
     if (!cmd) {
-      process.stdout.write(`skip  ${tool.label} — no automated install for ${platform}\n      install manually: ${tool.manual}\n`);
-      failures.push(tool.key);
+      row(yellow("!"), tool, `install manually: ${tool.manual}`);
+      failures.push(tool);
       continue;
     }
-    process.stdout.write(`\n>>> installing ${tool.label}\n    ${cmd.join(" ")}\n`);
+    out();
+    out(`  ${teal("→")} ${bold("installing " + tool.name)} ${dim(cmd.join(" "))}`);
     const code = await spawnInherit(cmd[0], cmd.slice(1));
+    out();
     if (code === 0) {
-      process.stdout.write(`ok    ${tool.label}\n`);
+      row(green("✓"), tool, "installed");
     } else {
-      process.stdout.write(`FAIL  ${tool.label} (exit ${code})\n      install manually: ${tool.manual}\n`);
-      failures.push(tool.key);
+      row(red("✗"), tool, `failed — try: ${tool.manual}`);
+      failures.push(tool);
     }
   }
 
-  process.stdout.write("\nDone. Re-run `npx media-context-mcp setup` any time, or restart your MCP client to pick up new tools.\n");
-  if (!wantWhisper) {
-    process.stdout.write("For audio transcripts, run with --audio.\n");
+  out();
+  if (failures.length === 0) {
+    out(`  ${green("✓")} ${bold("All set.")} ${dim("Restart your MCP client to pick up new tools.")}`);
+  } else {
+    out(`  ${yellow("⚠")} ${bold(`${failures.length} need${failures.length === 1 ? "s" : ""} manual install`)} ${dim("(see above).")}`);
   }
+  if (!wantAudio) {
+    out(`  ${dim("Tip: enable transcription with")} ${bold("npx media-context-mcp setup --audio")}`);
+  }
+  out();
   return failures.length > 0 ? 1 : 0;
 }
