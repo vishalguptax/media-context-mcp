@@ -1,0 +1,32 @@
+name: Publish
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write # required for npm Trusted Publishing (OIDC) + provenance
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org
+
+      # Trusted Publishing needs a recent npm (>= 11.5.1).
+      - run: npm install -g npm@latest
+
+      - run: npm ci
+      - run: npm run build
+      - run: npm test
+
+      # No NODE_AUTH_TOKEN — npm exchanges the OIDC token for a short-lived
+      # credential automatically when this repo/workflow is a trusted publisher.
+      - run: npm publish
