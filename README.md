@@ -37,11 +37,9 @@ claude mcp add media-context -- npx -y media-context-mcp
 ```
 
 <details>
-<summary><b>Other clients</b> — Claude Desktop · Cursor · VS Code · Windsurf · Cline · Codex</summary>
+<summary><b>Other clients</b> — Claude Desktop · Cursor · Windsurf · Cline · Kiro · Gemini CLI · JetBrains · VS Code · Zed · Codex</summary>
 
-The launch command is always `npx -y media-context-mcp`.
-
-**Claude Desktop** — Settings → Developer → Edit Config (`claude_desktop_config.json`):
+**Most clients use the same block** — paste it into the client's MCP config file:
 
 ```json
 {
@@ -51,27 +49,31 @@ The launch command is always `npx -y media-context-mcp`.
 }
 ```
 
-**Cursor / Windsurf / Cline** — add to the client's MCP config (`~/.cursor/mcp.json`, `~/.codeium/windsurf/mcp_config.json`, Cline settings):
+| Client | Config file |
+|--------|-------------|
+| Claude Desktop | `claude_desktop_config.json` (Settings → Developer → Edit Config) |
+| Cursor | `~/.cursor/mcp.json` (global) or `.cursor/mcp.json` (project) |
+| Windsurf | `~/.codeium/windsurf/mcp_config.json` |
+| Cline / Roo Code | the extension's MCP settings (`cline_mcp_settings.json`) |
+| Kiro | `.kiro/settings/mcp.json` (project) or `~/.kiro/settings/mcp.json` (user) |
+| Gemini CLI | `~/.gemini/settings.json` |
+| JetBrains AI Assistant | Settings → Tools → AI Assistant → Model Context Protocol |
+
+**A few clients use a different shape:**
+
+<sub>VS Code (Copilot, agent mode) — `.vscode/mcp.json`, uses the `servers` key:</sub>
 
 ```json
-{
-  "mcpServers": {
-    "media-context": { "command": "npx", "args": ["-y", "media-context-mcp"] }
-  }
-}
+{ "servers": { "media-context": { "command": "npx", "args": ["-y", "media-context-mcp"] } } }
 ```
 
-**VS Code (Copilot, agent mode)** — `.vscode/mcp.json` (uses the `servers` key):
+<sub>Zed — `settings.json`, uses `context_servers`:</sub>
 
 ```json
-{
-  "servers": {
-    "media-context": { "command": "npx", "args": ["-y", "media-context-mcp"] }
-  }
-}
+{ "context_servers": { "media-context": { "command": { "path": "npx", "args": ["-y", "media-context-mcp"] } } } }
 ```
 
-**Codex CLI** — `~/.codex/config.toml`:
+<sub>Codex CLI — `~/.codex/config.toml`:</sub>
 
 ```toml
 [mcp_servers.media-context]
