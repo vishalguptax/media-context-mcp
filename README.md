@@ -59,7 +59,7 @@ claude mcp add media-context -- npx -y media-context-mcp
 ```
 
 <details>
-<summary><b>Other clients</b> — Claude Desktop · Cursor · Windsurf · Cline · Kiro · Gemini CLI · JetBrains · VS Code · Zed · Codex</summary>
+<summary><b>Other clients</b> — Cursor, VS Code, Claude Desktop, Kiro, Zed & more</summary>
 
 **Most clients use the same block** — paste it into the client's MCP config file:
 
@@ -81,30 +81,32 @@ claude mcp add media-context -- npx -y media-context-mcp
 | Gemini CLI | `~/.gemini/settings.json` |
 | JetBrains AI Assistant | Settings → Tools → AI Assistant → Model Context Protocol |
 
-**A few clients use a different shape:**
+**A few clients use a different shape.**
 
-<sub>VS Code (Copilot, agent mode) — `.vscode/mcp.json`, uses the `servers` key:</sub>
+`VS Code` (Copilot, agent mode) — `.vscode/mcp.json`, uses the `servers` key:
 
 ```json
 { "servers": { "media-context": { "command": "npx", "args": ["-y", "media-context-mcp"] } } }
 ```
 
-<sub>Zed — `settings.json`, uses `context_servers`:</sub>
+`Zed` — `settings.json`, uses `context_servers`:
 
 ```json
 { "context_servers": { "media-context": { "command": { "path": "npx", "args": ["-y", "media-context-mcp"] } } } }
 ```
 
-<sub>Codex CLI — `~/.codex/config.toml`:</sub>
+`Codex CLI` — `~/.codex/config.toml`:
 
 ```toml
 [mcp_servers.media-context]
 command = "npx"
 args = ["-y", "media-context-mcp"]
 ```
+
+**Per-project:** commit the config so your team shares it — `--scope project` (writes `.mcp.json`), or a `.cursor/mcp.json` / `.vscode/mcp.json` in the repo.
 </details>
 
-<sub>**Claude Code plugin** (one command): `/plugin marketplace add vishalguptax/media-context-mcp` then `/plugin install media-context`. &nbsp;•&nbsp; **Per-project**: add `--scope project` (writes `.mcp.json`), or commit a `.cursor/mcp.json` / `.vscode/mcp.json` so your team shares it.</sub>
+> **Tip:** in Claude Code you can install it as a plugin instead — run `/plugin marketplace add vishalguptax/media-context-mcp`, then `/plugin install media-context`.
 
 ### 2 · Install the media tools
 
