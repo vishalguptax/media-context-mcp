@@ -1,11 +1,13 @@
 <p align="center">
-  <img src="./assets/banner.svg" alt="media-context-mcp — local MCP server to analyze video, audio and images for AI assistants" width="100%">
+  <img src="https://raw.githubusercontent.com/vishalguptax/media-context-mcp/main/assets/banner.svg" alt="media-context-mcp — local MCP server to analyze video, audio and images for AI assistants" width="100%">
 </p>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/media-context-mcp"><img src="https://img.shields.io/npm/v/media-context-mcp.svg" alt="npm"></a>
+  <a href="https://www.npmjs.com/package/media-context-mcp"><img src="https://img.shields.io/npm/v/media-context-mcp.svg?color=2ea043" alt="npm version"></a>
+  <a href="https://www.npmjs.com/package/media-context-mcp"><img src="https://img.shields.io/npm/dm/media-context-mcp.svg?color=2ea043" alt="npm downloads"></a>
   <a href="https://github.com/vishalguptax/media-context-mcp/actions/workflows/ci.yml"><img src="https://github.com/vishalguptax/media-context-mcp/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue.svg" alt="license"></a>
+  <a href="https://nodejs.org"><img src="https://img.shields.io/node/v/media-context-mcp.svg?color=blue" alt="node"></a>
 </p>
 
 <p align="center">
@@ -23,7 +25,27 @@
 
 ---
 
-Your assistant can read text and look at a picture, but it can't watch a video or listen to audio. **media-context-mcp** fills that gap: point it at a file or a URL and it hands back clean, model-ready context — sampled frames, a transcript, or the text on screen — without sending anything to the cloud.
+Your AI assistant can read text and look at a picture, but it can't watch a video or listen to audio. **media-context-mcp** fills that gap: point it at a file or a URL and it returns clean, model-ready context — sampled frames, a transcript, or the text on screen — without sending anything to the cloud.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/vishalguptax/media-context-mcp/main/assets/example.webp" alt="A 10-second clip turned into a single contact-sheet of frames" width="92%">
+</p>
+
+<p align="center"><sub>↑ One call turns a 10-second clip into a single contact sheet — the model reads the tiles in order, plus a short summary. No hundreds of stills.</sub></p>
+
+<details>
+<summary><b>Contents</b></summary>
+
+- [Install](#-install)
+- [Features](#-features)
+- [Modes](#-modes)
+- [Examples](#-examples)
+- [Tools](#-tools)
+- [FAQ](#-faq)
+- [Requirements](#-requirements)
+- [Development](#-development)
+- [License](#-license)
+</details>
 
 ## 🚀 Install
 
@@ -82,7 +104,7 @@ args = ["-y", "media-context-mcp"]
 ```
 </details>
 
-<sub>**Claude Code plugin** (one command): `/plugin marketplace add vishalguptax/media-context-mcp` then `/plugin install media-context`. &nbsp;•&nbsp; **Per-project**: add `--scope project` (writes `.mcp.json`) or commit a `.cursor/mcp.json` / `.vscode/mcp.json` so your team shares it.</sub>
+<sub>**Claude Code plugin** (one command): `/plugin marketplace add vishalguptax/media-context-mcp` then `/plugin install media-context`. &nbsp;•&nbsp; **Per-project**: add `--scope project` (writes `.mcp.json`), or commit a `.cursor/mcp.json` / `.vscode/mcp.json` so your team shares it.</sub>
 
 ### 2 · Install the media tools
 
@@ -93,7 +115,7 @@ npx media-context-mcp setup          # ffmpeg + URL download + on-screen text (O
 npx media-context-mcp setup --audio  # also enable transcription
 ```
 
-The server **finds the tools automatically afterward** — even in the off-`PATH` places installers use (Tesseract in Program Files, Whisper in a Python Scripts folder) — so OCR and transcripts just work, no env vars to set. Run `check_media_deps` to see what's ready; `setup --uninstall` removes the tools again.
+The server **finds the tools automatically afterward** — even in the off-`PATH` spots installers use (Tesseract in Program Files, Whisper in a Python Scripts folder) — so OCR and transcripts just work, no env vars to set. Run `check_media_deps` to see what's ready; `setup --uninstall` removes the tools again.
 
 <details>
 <summary>Install by hand, or point at a custom path</summary>
@@ -125,6 +147,17 @@ Point at an unusual location with `FFMPEG_BIN` / `YTDLP_BIN` / `WHISPER_BIN` / `
 | 🪙 **Token-cheap** | Frames are tiled and downscaled — a long clip costs a couple of images, not hundreds |
 | 🔒 **100% local** | Runs on your machine. No API keys, no uploads |
 
+## 🎞️ Modes
+
+`analyze_media` auto-detects audio and images; for video, pick how frames are sampled:
+
+| Mode | Best for |
+|------|----------|
+| `sheet` *(default)* | A cheap overview — frames tiled into montage grids |
+| `frames` | Detail on specific moments — individual full-size stills |
+| `scenes` | Slide decks & static screencasts — only scene-change frames |
+| `filmstrip` | Catching a sub-second UI glitch — a dense, near-native-fps strip |
+
 ## 💬 Examples
 
 Just ask in plain language — the assistant picks the right options.
@@ -132,12 +165,12 @@ Just ask in plain language — the assistant picks the right options.
 | You ask | What happens |
 |---------|--------------|
 | *“Summarize `demo.mp4`.”* | A quick overview from sampled frames |
-| *“What error does `bug.mp4` show at the end?”* | Reads the exact on-screen text |
+| *“What error does `bug.mp4` show at the end?”* | Reads the exact on-screen text (OCR) |
 | *“Transcribe `standup.m4a` and list action items.”* | Local speech-to-text |
 | *“Summarize `https://youtu.be/VIDEO_ID` with the transcript.”* | Fetches and transcribes |
-| *“In `slider.mp4`, find where the slider flickers ~0:06.”* | Catches a sub-second glitch |
+| *“In `slider.mp4`, find where the slider flickers ~0:06.”* | Catches a sub-second glitch, frame by frame |
 
-Finer control — modes, cropping, language, sampling rate — is in the **[usage guide](./docs/usage.md)**.
+Finer control — cropping, time windows, language, sampling rate — is in the **[usage guide](./docs/usage.md)**.
 
 ## 🧰 Tools
 
@@ -161,6 +194,13 @@ Everything runs locally, and each call cleans up its temporary files when it ret
 **Does it support YouTube and other links?** Yes — any `yt-dlp`-supported URL.
 
 **Is it free?** Yes, open source under Apache-2.0.
+
+## 📋 Requirements
+
+- **Node.js 18+** (the server runs via `npx`)
+- **ffmpeg** (required) — install with `npx media-context-mcp setup`
+- Optional: `yt-dlp` (URLs), `whisper` (transcripts), `tesseract` (OCR)
+- **Windows, macOS, and Linux**
 
 ## 🛠️ Development
 
